@@ -1,0 +1,625 @@
+<div class="space-y-6 max-w-7xl mx-auto pb-12">
+
+  <!-- Filter Bar BI Langsung -->
+  <div class="flex items-center justify-end pb-2 sm:pb-3 border-b border-slate-200">
+    <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+      <form action="/laporan" method="GET" class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+        
+        <!-- Filter Cabang -->
+        <% if (cabangList && cabangList.length > 1) { %>
+          <select 
+            name="cabang_id" 
+            onchange="this.form.submit()" 
+            class="bg-white border border-slate-300 text-slate-900 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+            <option value="">Semua Cabang</option>
+            <% cabangList.forEach(c => { %>
+              <option value="<%= c.id %>" <%= filterCabang === c.id ? 'selected' : '' %>><%= c.nama %></option>
+            <% }) %>
+          </select>
+        <% } %>
+
+        <!-- Filter Tahun -->
+        <select 
+          name="tahun" 
+          onchange="this.form.submit()" 
+          class="bg-white border border-slate-300 text-slate-900 text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="semua" <%= filterTahun === 'semua' ? 'selected' : '' %>>Semua Tahun</option>
+          <% listTahun.forEach(t => { %>
+            <option value="<%= t %>" <%= filterTahun === String(t) ? 'selected' : '' %>>Tahun <%= t %></option>
+          <% }) %>
+        </select>
+
+        <!-- Filter Status Proyek -->
+        <select 
+          name="status" 
+          onchange="this.form.submit()" 
+          class="bg-white border border-slate-300 text-slate-900 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="semua" <%= filterStatus === 'semua' ? 'selected' : '' %>>Semua Status</option>
+          <option value="Aktif" <%= filterStatus === 'Aktif' ? 'selected' : '' %>>Hanya Berjalan</option>
+          <option value="Selesai" <%= filterStatus === 'Selesai' ? 'selected' : '' %>>Hanya Selesai</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Kartu KPI Utama Eksekutif dengan Motif Bangunan & Infrastruktur -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+    
+    <!-- Total Nilai Modal Bersih (Motif Bangunan Arsitektur) -->
+    <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 200 140" fill="none" stroke="currentColor">
+        <path d="M50 135V75L120 25L190 75V135H50Z" stroke-width="2" />
+        <path d="M42 78L120 22L198 78" stroke-width="2.5" />
+        <rect x="70" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+      </svg>
+      <div class="relative z-10 flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <span class="truncate">Total Modal Portofolio</span>
+        <span class="h-2 w-2 rounded-full bg-slate-900 shrink-0"></span>
+      </div>
+      <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono text-slate-900 mt-1 truncate">
+        Rp<%= totalModalPortofolio.toLocaleString('id-ID') %>
+      </div>
+      <span class="relative z-10 text-[10px] text-slate-400 mt-0.5 block"><%= totalProyek %> Proyek Dikelola</span>
+    </div>
+
+    <!-- Total Realisasi Biaya (Motif Tower Crane) -->
+    <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 150" fill="none" stroke="currentColor">
+        <line x1="82" y1="16" x2="82" y2="142" stroke-width="2" />
+        <line x1="94" y1="16" x2="94" y2="142" stroke-width="2" />
+        <line x1="38" y1="16" x2="208" y2="16" stroke-width="2.5" />
+      </svg>
+      <div class="relative z-10 flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <span class="truncate">Realisasi Biaya</span>
+        <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+      </div>
+      <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono text-slate-900 mt-1 truncate">
+        Rp<%= totalBelanjaPortofolio.toLocaleString('id-ID') %>
+      </div>
+      <div class="relative z-10 flex items-center space-x-1 mt-0.5 text-[10px]">
+        <span class="text-slate-400">Serapan:</span>
+        <span class="font-mono font-bold text-slate-700"><%= rasioSerapanPortofolio %>%</span>
+      </div>
+    </div>
+
+    <!-- Sisa Kas Likuid (Motif Jembatan Infrastruktur) -->
+    <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs group">
+      <svg class="absolute -right-2 -bottom-2 w-26 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 240 145" fill="none" stroke="currentColor">
+        <path d="M5 106H235" stroke-width="3" />
+        <path d="M136 12L127 106M136 12L145 106" stroke-width="2.5" />
+        <line x1="136" y1="22" x2="55" y2="106" stroke-width="1.2" />
+      </svg>
+      <div class="relative z-10 flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <span class="truncate">Sisa Kas Tersedia</span>
+        <span class="h-2 w-2 rounded-full <%= totalKasPortofolio < 0 ? 'bg-rose-500' : 'bg-emerald-600' %> shrink-0"></span>
+      </div>
+      <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono <%= totalKasPortofolio < 0 ? 'text-rose-600' : 'text-emerald-700' %> mt-1 truncate">
+        Rp<%= totalKasPortofolio.toLocaleString('id-ID') %>
+      </div>
+      <span class="relative z-10 text-[10px] text-slate-400 mt-0.5 block"><%= totalKasPortofolio < 0 ? 'Perlu suntikan modal' : 'Likuiditas sehat' %></span>
+    </div>
+
+    <!-- Status Portofolio & Efisiensi (Motif Pencakar Langit Megah) -->
+    <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-slate-900 bg-slate-900 text-white shadow-xs group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-white/10 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 155" fill="none" stroke="currentColor">
+        <line x1="112" y1="4" x2="112" y2="25" stroke-width="2" />
+        <path d="M102 25H122L127 62L133 105L137 148H87L91 105L97 62L102 25Z" stroke-width="2" />
+      </svg>
+      <div class="relative z-10 flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <span class="truncate">Status Portofolio</span>
+        <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-emerald-400 font-bold"><%= totalLuasM2 %> m²</span>
+      </div>
+      <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono text-emerald-400 mt-1 truncate">
+        <%= countAktif %> Aktif • <%= countSelesai %> Selesai
+      </div>
+      <span class="relative z-10 text-[10px] text-slate-400 mt-0.5 block truncate">Konstruksi & renovasi</span>
+    </div>
+
+  </div>
+
+  <% if (totalProyek === 0) { %>
+    <!-- Empty State BI -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4 shadow-sm">
+      <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Belum Ada Data untuk Grafik BI</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+          Mulai daftarkan proyek dan catat transaksi pengeluaran belanja untuk melihat visualisasi analitik interaktif.
+        </p>
+      </div>
+      <div class="pt-2">
+        <a href="/proyek/baru" class="inline-flex items-center space-x-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+          <span>Daftarkan Proyek</span>
+        </a>
+      </div>
+    </div>
+  <% } else { %>
+
+    <!-- GRID GRAFIK BI (2 KOLOM: TREN BULANAN & KOMPOSISI KATEGORI) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+      
+      <!-- Grafik 1: Tren Arus Kas Bulanan (Inflow vs Outflow) - 2 Kolom -->
+      <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-3 border-b border-slate-100 mb-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-1.5">
+              <span>Tren Arus Kas Bulanan</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded font-bold"><%= filterTahun === 'semua' ? 'Sepanjang Waktu' : 'Tahun ' + filterTahun %></span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Perbandingan perputaran modal masuk vs realisasi biaya belanja.</p>
+          </div>
+          <div class="flex items-center space-x-3 text-[11px] mt-1 sm:mt-0 font-medium">
+            <span class="flex items-center space-x-1 text-emerald-700">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              <span>Modal Masuk</span>
+            </span>
+            <span class="flex items-center space-x-1 text-slate-700">
+              <span class="h-2.5 w-2.5 rounded-full bg-slate-900 inline-block"></span>
+              <span>Realisasi Belanja</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chartCashflowMonthly"></canvas>
+        </div>
+      </div>
+
+      <!-- Grafik 2: Komposisi Pengeluaran per Kategori (Donut Chart) - 1 Kolom -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="pb-3 border-b border-slate-100 mb-3">
+          <h3 class="text-sm font-bold text-slate-900 tracking-tight">Alokasi Biaya per Kategori</h3>
+          <p class="text-[11px] text-slate-400">Distribusi belanja konstruksi.</p>
+        </div>
+
+        <div class="relative h-56 sm:h-64 w-full flex items-center justify-center">
+          <canvas id="chartCategoryDonut"></canvas>
+        </div>
+
+        <!-- Mini Top Kategori List -->
+        <% if (categoryChart.labels && categoryChart.labels.length > 0) { %>
+          <div class="pt-3 border-t border-slate-100 mt-2 space-y-1.5">
+            <% for (let i = 0; i < Math.min(3, categoryChart.labels.length); i++) { %>
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-600 truncate max-w-[140px]"><%= categoryChart.labels[i] %></span>
+                <span class="font-mono font-bold text-slate-900">
+                  Rp<%= categoryChart.data[i].toLocaleString('id-ID') %> (<%= categoryChart.percentages[i] %>%)
+                </span>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+
+    <!-- GRID GRAFIK BI BARIS 2: PERBANDINGAN PROYEK & KONTRIBUSI CABANG -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      
+      <!-- Grafik 3: Perbandingan Modal vs Belanja Proyek Terbesar -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div class="pb-3 border-b border-slate-100 mb-3">
+          <h3 class="text-sm font-bold text-slate-900 tracking-tight">Perbandingan Modal vs Belanja Tiap Proyek</h3>
+          <p class="text-[11px] text-slate-400">Efisiensi penyerapan modal pada proyek utama.</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chartProjectComparison"></canvas>
+        </div>
+      </div>
+
+      <!-- Grafik 4: Distribusi & Serapan Anggaran per Cabang -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div class="pb-3 border-b border-slate-100 mb-3">
+          <h3 class="text-sm font-bold text-slate-900 tracking-tight">Kinerja & Serapan Multi-Cabang</h3>
+          <p class="text-[11px] text-slate-400">Total belanja dan ketersediaan modal di setiap cabang.</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chartBranchDistribution"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TABEL 1: HEALTH CHECK & SERAPAN KEUANGAN SELURUH PROYEK -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs space-y-3 p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 tracking-tight">Status Kesehatan & Serapan Modal Proyek</h3>
+          <p class="text-[11px] text-slate-400">Evaluasi batas aman arus kas dan risiko defisit operasional.</p>
+        </div>
+        <span class="text-[10px] text-slate-400 font-mono"><%= proyekAnalytics.length %> Proyek Terdaftar</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+            <tr>
+              <th class="py-2.5 px-3">Nama Proyek</th>
+              <th class="py-2.5 px-3">Cabang</th>
+              <th class="py-2.5 px-3">Jenis</th>
+              <th class="py-2.5 px-3 text-right">Modal</th>
+              <th class="py-2.5 px-3 text-right">Realisasi Belanja</th>
+              <th class="py-2.5 px-3 text-right">Sisa Kas</th>
+              <th class="py-2.5 px-3 text-center">Serapan</th>
+              <th class="py-2.5 px-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <% proyekAnalytics.forEach(p => { %>
+              <tr class="hover:bg-slate-50/70 transition-colors">
+                <td class="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
+                  <a href="/proyek/<%= p.id %>" class="hover:text-emerald-700 flex items-center space-x-1">
+                    <span><%= p.nama %></span>
+                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                  </a>
+                </td>
+                <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap"><%= p.cabang %></td>
+                <td class="py-2.5 px-3 whitespace-nowrap">
+                  <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-semibold text-slate-700">
+                    <%= p.jenis %>
+                  </span>
+                </td>
+                <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-700 whitespace-nowrap">
+                  Rp<%= p.modal.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                  Rp<%= p.belanja.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-2.5 px-3 text-right font-mono font-bold <%= p.saldoKas < 0 ? 'text-rose-600' : 'text-emerald-700' %> whitespace-nowrap">
+                  Rp<%= p.saldoKas.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-2.5 px-3 text-center font-mono font-semibold text-xs whitespace-nowrap">
+                  <div class="flex items-center justify-center space-x-1.5">
+                    <div class="w-12 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div class="h-1.5 rounded-full <%= p.serapanPct > 100 ? 'bg-rose-500' : (p.serapanPct > 85 ? 'bg-amber-500' : 'bg-emerald-500') %>" style="width: <%= Math.min(100, p.serapanPct) %>%"></div>
+                    </div>
+                    <span><%= p.serapanPct %>%</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                  <% if (p.statusKesehatan === 'Defisit') { %>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Defisit</span>
+                  <% } else if (p.statusKesehatan === 'Waspada') { %>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Waspada</span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Sehat</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABEL 2: UNIT ECONOMICS (BIAYA PER M2 BERDASARKAN JENIS KONSTRUKSI) -->
+    <% if (unitEconomics && unitEconomics.length > 0) { %>
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs space-y-3 p-4 sm:p-5">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Unit Economics: Rata-Rata Biaya per m²</h3>
+            <p class="text-[11px] text-slate-400">Patokan estimasi biaya lapangan berdasarkan luas bangunan dan jenis konstruksi.</p>
+          </div>
+          <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Benchmark Proyek</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <% unitEconomics.forEach(u => { %>
+            <div class="p-3 bg-slate-50 border border-slate-200/90 rounded-xl space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-900"><%= u.jenis %></span>
+                <span class="text-[10px] text-slate-400 font-mono"><%= u.count %> Proyek</span>
+              </div>
+              <div class="text-base font-extrabold font-mono text-slate-900">
+                Rp<%= u.avgPerM2.toLocaleString('id-ID') %><span class="text-[11px] font-normal text-slate-500"> /m²</span>
+              </div>
+              <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-200 flex justify-between">
+                <span>Luas: <%= u.totalLuas %> m²</span>
+                <span>Belanja: Rp<%= (u.totalBiaya / 1000000).toFixed(1) %> Jt</span>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+  <% } %>
+
+</div>
+
+<!-- LOAD CHART.JS CDN UNTUK VISUALISASI BI INTERAKTIF -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Helper Format Rupiah untuk Tooltip Chart
+  function formatRupiahTooltip(val) {
+    return 'Rp ' + Number(val).toLocaleString('id-ID');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    <% if (totalProyek > 0) { %>
+
+      // =========================================================================
+      // 1. CHART TREN ARUS KAS BULANAN (MONTHLY CASHFLOW)
+      // =========================================================================
+      const ctxCashflow = document.getElementById('chartCashflowMonthly');
+      if (ctxCashflow) {
+        new Chart(ctxCashflow, {
+          type: 'bar',
+          data: {
+            labels: <%- JSON.stringify(namaBulan) %>,
+            datasets: [
+              {
+                label: 'Modal Masuk',
+                data: <%- JSON.stringify(monthlyInflow) %>,
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                hoverBackgroundColor: 'rgba(16, 185, 129, 1)',
+                borderRadius: 4,
+                maxBarThickness: 28,
+                barPercentage: 0.7,
+                categoryPercentage: 0.7,
+                borderSkipped: false
+              },
+              {
+                label: 'Realisasi Belanja',
+                data: <%- JSON.stringify(monthlyOutflow) %>,
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                hoverBackgroundColor: 'rgba(15, 23, 42, 1)',
+                borderRadius: 4,
+                maxBarThickness: 28,
+                barPercentage: 0.7,
+                categoryPercentage: 0.7,
+                borderSkipped: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Plus Jakarta Sans', size: 12 },
+                bodyFont: { family: 'JetBrains Mono', size: 12 },
+                padding: 10,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function (context) {
+                    return context.dataset.label + ': ' + formatRupiahTooltip(context.parsed.y);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#64748b' }
+              },
+              y: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  font: { family: 'JetBrains Mono', size: 9 },
+                  color: '#64748b',
+                  callback: function (val) {
+                    if (val >= 1000000000) return (val / 1000000000).toFixed(1) + ' M';
+                    if (val >= 1000000) return (val / 1000000).toFixed(0) + ' Jt';
+                    return val;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // =========================================================================
+      // 2. CHART KOMPOSISI KATEGORI (DONUT CHART)
+      // =========================================================================
+      const ctxDonut = document.getElementById('chartCategoryDonut');
+      if (ctxDonut) {
+        const catLabels = <%- JSON.stringify(categoryChart.labels) %>;
+        const catData = <%- JSON.stringify(categoryChart.data) %>;
+        const catColors = [
+          '#0f172a', '#10b981', '#6366f1', '#06b6d4', 
+          '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'
+        ];
+
+        new Chart(ctxDonut, {
+          type: 'doughnut',
+          data: {
+            labels: catLabels.length > 0 ? catLabels : ['Belum Ada'],
+            datasets: [{
+              data: catData.length > 0 ? catData : [1],
+              backgroundColor: catColors.slice(0, catLabels.length || 1),
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  font: { family: 'Plus Jakarta Sans', size: 10 },
+                  boxWidth: 10,
+                  padding: 8
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Plus Jakarta Sans', size: 11 },
+                bodyFont: { family: 'JetBrains Mono', size: 11 },
+                padding: 10,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function (context) {
+                    const val = context.raw || 0;
+                    return ' ' + context.label + ': ' + formatRupiahTooltip(val);
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // =========================================================================
+      // 3. CHART PERBANDINGAN PROYEK TERBESAR (HORIZONTAL BAR)
+      // =========================================================================
+      const ctxProject = document.getElementById('chartProjectComparison');
+      if (ctxProject) {
+        new Chart(ctxProject, {
+          type: 'bar',
+          data: {
+            labels: <%- JSON.stringify(projectComparison.labels) %>,
+            datasets: [
+              {
+                label: 'Modal',
+                data: <%- JSON.stringify(projectComparison.modal) %>,
+                backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                borderRadius: 4,
+                maxBarThickness: 20,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8
+              },
+              {
+                label: 'Realisasi Belanja',
+                data: <%- JSON.stringify(projectComparison.belanja) %>,
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                borderRadius: 4,
+                maxBarThickness: 20,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { font: { family: 'Plus Jakarta Sans', size: 10 }, boxWidth: 10 }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                padding: 10,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function (context) {
+                    return context.dataset.label + ': ' + formatRupiahTooltip(context.parsed.x);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  font: { family: 'JetBrains Mono', size: 9 },
+                  color: '#64748b',
+                  callback: function (val) {
+                    if (val >= 1000000000) return (val / 1000000000).toFixed(1) + 'M';
+                    if (val >= 1000000) return (val / 1000000).toFixed(0) + 'Jt';
+                    return val;
+                  }
+                }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#334155' }
+              }
+            }
+          }
+        });
+      }
+
+      // =========================================================================
+      // 4. CHART DISTRIBUSI PER CABANG (MULTI-BRANCH)
+      // =========================================================================
+      const ctxBranch = document.getElementById('chartBranchDistribution');
+      if (ctxBranch) {
+        const branchNames = <%- JSON.stringify(branchSummary.map(b => b.nama)) %>;
+        const branchModal = <%- JSON.stringify(branchSummary.map(b => b.modal)) %>;
+        const branchBelanja = <%- JSON.stringify(branchSummary.map(b => b.belanja)) %>;
+
+        new Chart(ctxBranch, {
+          type: 'bar',
+          data: {
+            labels: branchNames,
+            datasets: [
+              {
+                label: 'Modal Cabang',
+                data: branchModal,
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderRadius: 4,
+                maxBarThickness: 28,
+                barPercentage: 0.6,
+                categoryPercentage: 0.6
+              },
+              {
+                label: 'Realisasi Belanja',
+                data: branchBelanja,
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                borderRadius: 4,
+                maxBarThickness: 28,
+                barPercentage: 0.6,
+                categoryPercentage: 0.6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { font: { family: 'Plus Jakarta Sans', size: 10 }, boxWidth: 10 }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                padding: 10,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function (context) {
+                    return context.dataset.label + ': ' + formatRupiahTooltip(context.parsed.y);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#334155' }
+              },
+              y: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  font: { family: 'JetBrains Mono', size: 9 },
+                  color: '#64748b',
+                  callback: function (val) {
+                    if (val >= 1000000000) return (val / 1000000000).toFixed(1) + 'M';
+                    if (val >= 1000000) return (val / 1000000).toFixed(0) + 'Jt';
+                    return val;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+    <% } %>
+  });
+</script>

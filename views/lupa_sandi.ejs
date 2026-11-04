@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lupa Kata Sandi - MyProyek</title>
+  <link rel="icon" type="image/png" href="/image/icon.png">
+  <link rel="apple-touch-icon" href="/image/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased text-slate-800">
+  <div class="max-w-sm w-full bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-7">
+    
+    <div class="text-center mb-5">
+      <img src="/image/icon.png" alt="MyProyek" class="inline-block h-12 w-12 object-contain rounded-xl mb-2 shadow-sm">
+      <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Lupa Sandi</h1>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-xs flex items-center space-x-1.5">
+        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs space-y-2">
+        <div class="flex items-center space-x-1.5 font-semibold">
+          <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+          <span><%= success %></span>
+        </div>
+        <% if (typeof resetLink !== 'undefined' && resetLink) { %>
+          <div class="p-2 bg-white border border-emerald-200 rounded text-xs space-y-1">
+            <span class="text-slate-400 block text-[11px]">Tautan Reset:</span>
+            <a href="<%= resetLink %>" class="font-mono text-emerald-700 font-bold underline break-all block">
+              <%= resetLink %>
+            </a>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <form action="/lupa-sandi" method="POST" class="space-y-3 text-xs">
+      <div>
+        <label for="email" class="block font-semibold text-slate-700 mb-1">Email *</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="Email"
+          value="pemilik@kasproyek.com"
+          required 
+          autocomplete="email"
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+      </div>
+
+      <div class="pt-1">
+        <button 
+          type="submit" 
+          class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs shadow-sm transition-all"
+        >
+          Kirim
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-4 pt-3 border-t border-slate-100 text-center text-xs">
+      <a href="/login" class="text-slate-500 hover:text-slate-800 font-medium">
+        Kembali
+      </a>
+    </div>
+
+  </div>
+</body>
+</html>

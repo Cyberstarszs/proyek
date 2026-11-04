@@ -1,0 +1,317 @@
+<div class="space-y-5 max-w-6xl mx-auto">
+
+  <!-- Pilihan Filter Langsung -->
+  <div class="flex items-center justify-end pb-2 sm:pb-3 border-b border-slate-200">
+    <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+      <form action="/histori" method="GET" class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+        
+        <!-- Filter Cabang -->
+        <% if (cabangList && cabangList.length > 1) { %>
+          <select 
+            name="cabang_id" 
+            onchange="this.form.submit()" 
+            class="bg-white border border-slate-300 text-slate-900 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+            <option value="">Semua Cabang</option>
+            <% cabangList.forEach(c => { %>
+              <option value="<%= c.id %>" <%= filterCabang === c.id ? 'selected' : '' %>><%= c.nama %></option>
+            <% }) %>
+          </select>
+        <% } %>
+
+        <!-- Filter Tahun -->
+        <select 
+          name="tahun" 
+          onchange="this.form.submit()" 
+          class="bg-white border border-slate-300 text-slate-900 text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="semua" <%= filterTahun === 'semua' ? 'selected' : '' %>>Semua Tahun</option>
+          <% listTahun.forEach(t => { %>
+            <option value="<%= t %>" <%= filterTahun === String(t) ? 'selected' : '' %>>Tahun <%= t %></option>
+          <% }) %>
+        </select>
+
+        <!-- Filter Status -->
+        <select 
+          name="status" 
+          onchange="this.form.submit()" 
+          class="bg-white border border-slate-300 text-slate-900 text-xs font-semibold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="Selesai" <%= filterStatus === 'Selesai' ? 'selected' : '' %>>Hanya Selesai</option>
+          <option value="semua" <%= filterStatus === 'semua' ? 'selected' : '' %>>Semua Status</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Kartu Total Konsolidasi Histori dengan Motif Bangunan & Infrastruktur -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+    <!-- Modal Masuk (Motif Bangunan Arsitektur) -->
+    <div class="relative overflow-hidden p-3 sm:p-4 rounded-xl border border-slate-200 bg-white shadow-sm group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 200 140" fill="none" stroke="currentColor">
+        <path d="M50 135V75L120 25L190 75V135H50Z" stroke-width="2" />
+        <path d="M42 78L120 22L198 78" stroke-width="2.5" />
+        <rect x="70" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+      </svg>
+      <span class="relative z-10 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">Total Modal</span>
+      <div class="relative z-10 text-base sm:text-xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1 truncate">
+        Rp<%= totalSemuaCabang.modalMasuk.toLocaleString('id-ID') %>
+      </div>
+    </div>
+
+    <!-- Total Belanja (Motif Tower Crane) -->
+    <div class="relative overflow-hidden p-3 sm:p-4 rounded-xl border border-slate-200 bg-white shadow-sm group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 150" fill="none" stroke="currentColor">
+        <line x1="82" y1="16" x2="82" y2="142" stroke-width="2" />
+        <line x1="94" y1="16" x2="94" y2="142" stroke-width="2" />
+        <line x1="38" y1="16" x2="208" y2="16" stroke-width="2.5" />
+      </svg>
+      <span class="relative z-10 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">Total Belanja</span>
+      <div class="relative z-10 text-base sm:text-xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1 truncate">
+        Rp<%= totalSemuaCabang.biayaRealisasi.toLocaleString('id-ID') %>
+      </div>
+    </div>
+
+    <!-- Sisa Kas Akhir (Motif Jembatan Infrastruktur) -->
+    <div class="relative overflow-hidden p-3 sm:p-4 rounded-xl border border-slate-200 bg-white shadow-sm group">
+      <svg class="absolute -right-2 -bottom-2 w-26 h-18 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 240 145" fill="none" stroke="currentColor">
+        <path d="M5 106H235" stroke-width="3" />
+        <path d="M136 12L127 106M136 12L145 106" stroke-width="2.5" />
+        <line x1="136" y1="22" x2="55" y2="106" stroke-width="1.2" />
+        <line x1="136" y1="42" x2="88" y2="106" stroke-width="1.2" />
+      </svg>
+      <span class="relative z-10 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">Sisa Kas Akhir</span>
+      <div class="relative z-10 text-base sm:text-xl font-bold font-mono <%= totalSemuaCabang.saldoKas < 0 ? 'text-rose-600' : 'text-emerald-700' %> mt-0.5 sm:mt-1 truncate">
+        Rp<%= totalSemuaCabang.saldoKas.toLocaleString('id-ID') %>
+      </div>
+    </div>
+
+    <!-- Total Proyek Selesai (Motif Pencakar Langit Megah) -->
+    <div class="relative overflow-hidden p-3 sm:p-4 rounded-xl border border-slate-900 bg-slate-900 text-white shadow-sm group">
+      <svg class="absolute -right-2 -bottom-2 w-24 h-18 text-white/10 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 155" fill="none" stroke="currentColor">
+        <line x1="112" y1="4" x2="112" y2="25" stroke-width="2" />
+        <path d="M102 25H122L127 62L133 105L137 148H87L91 105L97 62L102 25Z" stroke-width="2" />
+      </svg>
+      <span class="relative z-10 text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider block truncate">Proyek Selesai</span>
+      <div class="relative z-10 text-base sm:text-xl font-extrabold font-mono text-emerald-400 mt-0.5 sm:mt-1 truncate">
+        <%= totalSemuaCabang.totalProyekSelesai %> Proyek
+      </div>
+    </div>
+  </div>
+
+  <!-- Konten Utama: Daftar Proyek Histori -->
+  <% if (totalSemuaCabang.totalProyekSelesai === 0) { %>
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4 shadow-sm">
+      <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Belum Ada Proyek Selesai</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+          Proyek yang sedang berlangsung dapat diakhiri kapan saja menggunakan tombol <strong>Akhiri Proyek</strong> pada halaman detail proyek untuk masuk ke Histori ini.
+        </p>
+      </div>
+      <div class="pt-2 flex items-center justify-center space-x-2">
+        <a href="/" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+          Lihat Proyek Aktif
+        </a>
+        <a href="/histori?status=semua" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+          Tampilkan Semua Proyek
+        </a>
+      </div>
+    </div>
+  <% } else { %>
+
+    <!-- Rekapitulasi Tiap Cabang -->
+    <div class="space-y-4">
+      <% rekapCabang.forEach((r, idx) => { %>
+        <% if (r.proyekList.length > 0) { %>
+          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            
+            <!-- Header Cabang -->
+            <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-600"></span>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
+                  <%= r.cabang.nama %> <%= r.cabang.kota ? '(' + r.cabang.kota + ')' : '' %>
+                </h3>
+                <span class="text-[11px] text-slate-400 font-medium">
+                  • <%= r.proyekList.length %> Proyek Selesai
+                </span>
+              </div>
+
+              <!-- Subtotal Cabang -->
+              <div class="flex items-center space-x-3 text-xs">
+                <div>
+                  <span class="text-slate-400 text-[11px]">Modal:</span>
+                  <span class="font-mono font-medium text-slate-700 ml-0.5">Rp<%= r.modalMasuk.toLocaleString('id-ID') %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400 text-[11px]">Belanja:</span>
+                  <span class="font-mono font-bold text-slate-900 ml-0.5">Rp<%= r.biayaRealisasi.toLocaleString('id-ID') %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400 text-[11px]">Sisa:</span>
+                  <span class="font-mono font-bold <%= r.saldoKas < 0 ? 'text-rose-600' : 'text-emerald-700' %> ml-0.5">
+                    Rp<%= r.saldoKas.toLocaleString('id-ID') %>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- List Proyek dalam Cabang Ini -->
+            <div class="divide-y divide-slate-100">
+              <% r.proyekList.forEach((p, pIdx) => { %>
+                <div class="p-3 sm:p-4 space-y-2.5 hover:bg-slate-50/50 transition-colors">
+                  
+                  <!-- Baris Utama Proyek -->
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <a href="/proyek/<%= p.id %>" class="font-bold text-sm text-slate-900 hover:text-emerald-700 transition-colors flex items-center space-x-1">
+                          <span><%= p.nama %></span>
+                          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                        <span class="px-1.5 py-0.2 text-[9px] font-bold rounded-full <%= p.status === 'Selesai' ? 'bg-slate-900 text-emerald-400' : 'bg-slate-100 text-slate-700' %>">
+                          <%= p.status %>
+                        </span>
+                      </div>
+
+                      <!-- Metadata Periode & Durasi -->
+                      <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                        <span><%= p.jenis_bangunan %><% if (p.luas_m2 > 0) { %> • <%= p.luas_m2 %> m²<% } %></span>
+                        <span>•</span>
+                        <span class="font-mono">Mulai: <%= p.tanggal_mulai %></span>
+                        <% if (p.tanggal_selesai) { %>
+                          <span>•</span>
+                          <span class="font-mono font-medium text-slate-800">Selesai: <%= p.tanggal_selesai %></span>
+                        <% } %>
+                        <% if (p.durasiHari) { %>
+                          <span class="px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded font-semibold text-[10px]">
+                            <%= p.durasiHari %> Hari
+                          </span>
+                        <% } %>
+                      </div>
+                    </div>
+
+                    <!-- Ringkasan Angka & Tombol Detail Belanja -->
+                    <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-4 pt-1 sm:pt-0 border-t sm:border-0 border-slate-100">
+                      <div class="text-[11px]">
+                        <span class="text-slate-400">Modal:</span>
+                        <span class="font-mono font-medium text-slate-700 ml-0.5">Rp<%= p.modalMasuk.toLocaleString('id-ID') %></span>
+                      </div>
+                      <div class="text-[11px]">
+                        <span class="text-slate-400">Belanja:</span>
+                        <span class="font-mono font-bold text-slate-900 ml-0.5">Rp<%= p.biayaRealisasi.toLocaleString('id-ID') %></span>
+                      </div>
+                      <div class="text-[11px]">
+                        <span class="text-slate-400">Sisa Kas:</span>
+                        <span class="font-mono font-bold <%= p.saldoKas < 0 ? 'text-rose-600' : 'text-emerald-700' %> ml-0.5">
+                          Rp<%= p.saldoKas.toLocaleString('id-ID') %>
+                        </span>
+                      </div>
+
+                      <button 
+                        type="button"
+                        onclick="toggleBelanjaProyek(<%= idx %>, <%= pIdx %>)" 
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center space-x-1 <%= p.transaksiBelanja && p.transaksiBelanja.length > 0 ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-xs' : 'bg-slate-100 text-slate-400 cursor-not-allowed' %>"
+                        <%= (!p.transaksiBelanja || p.transaksiBelanja.length === 0) ? 'disabled' : '' %>
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <span>Detail Belanja (<%= p.transaksiBelanja ? p.transaksiBelanja.length : 0 %>)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Dropdown / Accordion Tabel Item Pembelian Lengkap Proyek -->
+                  <div id="belanja-proyek-<%= idx %>-<%= pIdx %>" class="hidden pt-2 border-t border-slate-200">
+                    <% if (p.transaksiBelanja && p.transaksiBelanja.length > 0) { %>
+                      <div class="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                        <div class="px-3 py-2 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
+                          <span>Catatan Lengkap Pembelian Proyek: <%= p.nama %></span>
+                          <span class="text-[10px] text-slate-500 font-mono"><%= p.transaksiBelanja.length %> Transaksi</span>
+                        </div>
+
+                        <!-- Rekap Subtotal Per Kategori Belanja Proyek -->
+                        <% if (p.kategoriSubtotal && Object.keys(p.kategoriSubtotal).length > 0) { %>
+                          <div class="px-3 py-2.5 bg-slate-100/60 border-b border-slate-200">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Subtotal Per Kategori:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                              <% Object.entries(p.kategoriSubtotal).forEach(([katNama, subNom]) => { %>
+                                <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[11px] shadow-2xs">
+                                  <span class="font-medium text-slate-700"><%= katNama %>:</span>
+                                  <span class="font-mono font-bold text-slate-900">Rp<%= Number(subNom).toLocaleString('id-ID') %></span>
+                                </span>
+                              <% }) %>
+                            </div>
+                          </div>
+                        <% } %>
+
+                        <div class="overflow-x-auto">
+                          <table class="min-w-full divide-y divide-slate-200 text-left text-[11px]">
+                            <thead class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                              <tr>
+                                <th class="py-2 px-3">Tanggal</th>
+                                <th class="py-2 px-3">Kategori</th>
+                                <th class="py-2 px-3">Nama Pengeluaran / Barang</th>
+                                <th class="py-2 px-3">Toko / Rekanan</th>
+                                <th class="py-2 px-3 text-right">Nominal</th>
+                              </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 bg-white text-slate-700">
+                              <% p.transaksiBelanja.forEach(tb => { %>
+                                <tr class="hover:bg-slate-50/70">
+                                  <td class="py-2 px-3 font-mono text-slate-500 whitespace-nowrap"><%= tb.tanggal_transaksi %></td>
+                                  <td class="py-2 px-3 font-medium whitespace-nowrap">
+                                    <span class="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-semibold">
+                                      <%= tb.nama_kategori || 'Tanpa Kategori' %>
+                                    </span>
+                                  </td>
+                                  <td class="py-2 px-3 font-semibold text-slate-900">
+                                    <%= tb.uraian %>
+                                    <% if (tb.jumlah) { %>
+                                      <span class="inline-block ml-1 px-1.5 py-0.2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded border border-slate-200"><%= tb.jumlah %></span>
+                                    <% } %>
+                                  </td>
+                                  <td class="py-2 px-3 text-slate-500"><%= tb.vendor || '-' %></td>
+                                  <td class="py-2 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                                    Rp<%= Number(tb.nominal).toLocaleString('id-ID') %>
+                                  </td>
+                                </tr>
+                              <% }) %>
+                            </tbody>
+                            <tfoot class="bg-slate-100/80 font-bold border-t border-slate-200">
+                              <tr>
+                                <td colspan="4" class="py-2 px-3 text-slate-900">Total Pengeluaran Proyek (<%= p.nama %>)</td>
+                                <td class="py-2 px-3 text-right font-mono text-slate-900">Rp<%= p.biayaRealisasi.toLocaleString('id-ID') %></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    <% } else { %>
+                      <p class="text-xs text-slate-400 py-2 text-center">Tidak ada catatan belanja tersimpan.</p>
+                    <% } %>
+                  </div>
+
+                </div>
+              <% }) %>
+            </div>
+
+          </div>
+        <% } %>
+      <% }) %>
+    </div>
+
+  <% } %>
+
+</div>
+
+<script>
+  function toggleBelanjaProyek(cabangIdx, proyekIdx) {
+    const el = document.getElementById(`belanja-proyek-${cabangIdx}-${proyekIdx}`);
+    if (el) {
+      el.classList.toggle('hidden');
+    }
+  }
+</script>

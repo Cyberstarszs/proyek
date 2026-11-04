@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+
+# Database files & logs
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+data/uploads/*
+!data/uploads/.gitkeep
+!data/.gitkeep
+
+# AI Agent & IDE artifacts
+.agents/
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db

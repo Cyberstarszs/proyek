@@ -1,0 +1,812 @@
+================================================================================
+SRS (SPESIFIKASI KEBUTUHAN PERANGKAT LUNAK)
+KasProyek - Aplikasi Pencatat Keuangan Proyek Pembangunan
+Versi 1.1 (Revisi Stack: Express.js + EJS + SQLite)  |  3 November 2026
+================================================================================
+
+DAFTAR ISI
+  0. Cara membaca dokumen ini
+  1. Ringkasan
+  2. Tujuan dan metrik sukses
+  3. Konteks, riset, dan register bukti
+  4. Pengguna
+  5. Istilah dan struktur data (CV > Cabang > Proyek)
+  6. Lingkup versi 1 (Must / Should / Could / Won't)
+  7. Kebutuhan fungsional (F-01 sampai F-14)
+  8. Aturan bisnis dan skenario uji rujukan
+  9. Kebutuhan non-fungsional
+ 10. Asumsi dan keputusan final
+ 11. Status tahap dan langkah berikutnya
+
+
+================================================================================
+0. CARA MEMBACA DOKUMEN INI
+================================================================================
+
+Setiap fakta diberi label asal-usulnya:
+  [USER]       disampaikan langsung oleh pemilik/klien
+  [VERIFIED]   dicek ke sumber, sumber dicatat di register bukti (bagian 3)
+  [INFERRED]   kesimpulan dari fakta lain, dapat diuji
+  [ASSUMED]    tebakan sementara, ditulis sebagai asumsi (bagian 10)
+  [UNVERIFIED] klaim yang belum bisa dicek, tidak dipakai sebagai dasar keputusan
+
+ID yang dipakai: F-xx fitur, BR-xx aturan bisnis, S-xx skenario uji,
+A-xx asumsi/keputusan, C-xx klaim di register bukti, Q-xx pertanyaan terbuka.
+
+Catatan Revisi & Penyempurnaan (Versi 1.1):
+  - PERUBAHAN TEKNOLOGI STACK ATAS ARAHAN PENGGUNA:
+    * Backend : Node.js dengan framework Express.js.
+    * Frontend: Server-Side Rendering (SSR) menggunakan EJS (.ejs) + Tailwind CSS.
+    * Database: SQLite (arsitektur file database mandiri, mode WAL, zero-maintenance).
+  - PENYESUAIAN INTEGRITAS DATA & KONKURENSI SQLITE (BR-01, BR-02, Bagian 9):
+    * Mutasi moneter menggunakan transaksi sekuensial aman `BEGIN IMMEDIATE TRANSACTION`
+      pada SQLite untuk menjamin isolasi mutlak penulisan kas tanpa race condition.
+    * Tipe data moneter menggunakan SQLite 64-bit INTEGER (dan BigInt di runtime Node.js)
+      yang presisi mutlak tanpa floating point.
+    * Backup mandiri (F-15) menjadi sangat cepat dan andal menggunakan perintah SQLite
+      `VACUUM INTO` untuk snapshot konsisten tanpa menghentikan aplikasi.
+  - PENYEMPURNAAN LOGIKA & ATURAN BISNIS SEBELUMNYA TETAP DIJAGA:
+    * Invarian Kas (BR-03) tetap valid secara aljabar dan matematis.
+    * Alokasi FIFO nota multi-kategori (F-08, BR-05, A-27).
+    * Alur penarikan modal sebelum status proyek "Selesai" (BR-13, F-03, F-04).
+    * Konversi client-side foto iPhone HEIC ke JPEG sebelum dikirim ke Express (F-11).
+
+
+================================================================================
+1. RINGKASAN
+================================================================================
+
+KasProyek adalah aplikasi web mandiri untuk SATU pemilik sebuah CV yang mengawasi
+dana beberapa proyek pembangunan di beberapa cabang. Tiap proyek punya "kantong"
+modal sendiri, misalnya Rp200.000.000. Pengeluaran (misalnya semen) dan panjar
+ke pembeli material dicatat per tanggal dengan foto nota, lalu saldo proyek
+berkurang. Beberapa proyek dapat berjalan di bulan yang sama tanpa uangnya
+tercampur. Aplikasi memberi PERINGATAN (tidak memblokir) saat saldo minus atau
+anggaran kategori terlampaui. Ada riwayat per tahun (per cabang, per proyek,
+per kategori) dan proyek lama menjadi patokan biaya per m2 untuk proyek serupa.
+
+Aplikasi dibangun menggunakan Node.js (Express.js), antarmuka template EJS (.ejs),
+gaya utilitas responsif Tailwind CSS, serta basis data SQLite lokal yang ringan,
+cepat, dan mudah dicadangkan.
+
+Pembeli material TIDAK memakai aplikasi. Mereka menyerahkan nota, lalu pemilik
+yang menginput.
+
+
+================================================================================
+2. TUJUAN DAN METRIK SUKSES
+================================================================================
+
+  Tujuan                  Metrik                          Target          Cara ukur
+  ----------------------  ------------------------------  --------------  ---------------------------
+  Saldo akurat            Selisih saldo aplikasi vs       Rp0             Skenario S-A s.d. S-G di
+                          hitungan manual                                 bagian 8 menjadi tes otomatis
+  Input cepat di lapangan Waktu mencatat satu nota (HP)   <= 30 detik     Stopwatch pada 10 nota pilot
+                                                          [ASSUMED]       (uji asumsi AR-1)
+  Bukti tercatat          Catatan bertanda "tanpa bukti"  <= 10% di       Laporan internal
+                                                          bulan ke-2
+                                                          [ASSUMED]
+  Patokan berguna         Proyek selesai sejenis yang     >= 2 proyek     Uji asumsi AR-2
+                          punya referensi                 maka rentang
+                                                          tampil
+
+
+================================================================================
+3. KONTEKS, RISET, DAN REGISTER BUKTI
+================================================================================
+
+3.1 Alternatif selain membangun (hasil riset Tahap 2)
+  Produk jadi untuk keuangan proyek konstruksi sudah ada (Mekari Jurnal,
+  HashMicro, 101 App). Semuanya mengarah ke akuntansi/ERP kontraktor yang lebih
+  berat dari kebutuhan satu pemilik dengan sekitar 5 proyek aktif [INFERRED].
+  Di halaman yang dibaca TIDAK ditemukan fitur panjar yang dipertanggungjawabkan
+  dengan nota dan patokan biaya per m2 antarproyek [UNVERIFIED, belum tentu
+  tidak ada]. Harga semua produk belum terverifikasi (C-05).
+  Keputusan: Membangun aplikasi mandiri berbasis Express.js + EJS + SQLite [USER].
+
+3.2 Pembeda produk ini
+  (1) panjar sebagai kewajiban pembeli, bukan langsung biaya;
+  (2) penanganan talangan otomatis saat belanja melebihi sisa panjar;
+  (3) patokan biaya per m2 dari riwayat sendiri;
+  (4) ringan dan mandiri: Express + EJS + SQLite, portabel, tanpa ketergantungan server database rumit.
+
+3.3 Risiko utama
+  - Pemilik tidak disiplin mencatat nota (AR-1).
+  - Biaya per m2 tidak cocok untuk jenis proyek tertentu (AR-2).
+  - Kategori biaya tidak konsisten antarproyek sehingga tidak bisa dibanding (AR-3).
+  - Data pribadi pada foto nota dan nama pembeli (C-06, C-07). Ditekan dengan prinsip
+    Privacy by Design (hanya nama panggilan/kerja, tanpa NIK/KTP).
+
+3.4 Register bukti (dicek 2026-11-03)
+
+  ID    Klaim                                                  Label        Sumber
+  ----  -----------------------------------------------------  -----------  ------------------------------------
+  C-01  Mekari Jurnal mengklaim anggaran per kategori,         VERIFIED     jurnal.id/id/solusi/
+        realisasi vs rencana, dan transaksi bayar langsung     (klaim       software-rencana-anggaran-biaya/
+        atau tertunda                                          vendor)
+  C-02  Mekari Jurnal mengklaim pemantauan stok material       VERIFIED     jurnal.id/id/solusi/
+                                                               (klaim       software-akuntansi-kontraktor/
+                                                               vendor)
+  C-03  HashMicro punya job costing multiproyek                UNVERIFIED   hanya dari artikel pesaing
+  C-04  101 App menyimpan proyek, RAB, dan transaksi           VERIFIED     101-app.com/id/blog/
+        keuangan                                               (klaim       ai-dalam-konstruksi-proyek-rab-keuangan
+                                                               vendor)
+  C-05  Harga Jurnal, HashMicro, 101 App                       UNVERIFIED   tidak ditemukan
+  C-06  UU 27/2022 (Pelindungan Data Pribadi) diundangkan      VERIFIED     Teks UU 27/2022
+        17 Okt 2022, masa transisi berakhir 17 Okt 2024
+  C-07  Lembaga pengawas PDP dalam proses harmonisasi per 2026 UNVERIFIED   pasal.id
+
+
+================================================================================
+4. PENGGUNA
+================================================================================
+
+  Peran               Deskripsi                                   Perangkat
+  ------------------  ------------------------------------------  --------------
+  Pemilik (SATU akun) Satu-satunya pengguna login. Menginput      HP dan laptop
+                      dan melihat semua CV, cabang, proyek,
+                      dan laporan.
+  Pembeli material    BUKAN pengguna. Hanya entitas nama yang     -
+                      tercatat sebagai penerima panjar/talangan.
+
+  Akibat penyederhanaan [INFERRED]:
+  - Tidak ada manajemen peran, undangan pengguna, atau hak akses bertingkat.
+  - "Siapa" yang melakukan perubahan di jejak audit selalu pemilik, namun
+    disimpan otomatis bersama stempel waktu WIB dan IP address di tabel audit SQLite.
+  - Data pembeli material diminimalkan (Privacy by Design): hanya menyimpan Nama
+    Panggilan/Kerja dan nomor kontak opsional.
+
+
+================================================================================
+5. ISTILAH DAN STRUKTUR DATA
+================================================================================
+
+  CV            Perusahaan milik pemilik. Hanya ada SATU CV di aplikasi (A-31).
+  Cabang        Unit/kantor cabang dari CV. Wajib ada untuk mengelompokkan proyek.
+                Cabang TIDAK punya saldo atau modal (A-30, A-32).
+  Proyek        Satu pekerjaan pembangunan fisik. Terikat ke tepat satu cabang.
+                Memegang satu "kantong" kas sendiri yang terisolasi penuh.
+  Transaksi     Satu catatan mutasi uang: modal masuk, penarikan modal, belanja langsung.
+
+  Struktur:   CV (1)  -->  Cabang (1..*)  -->  Proyek (1..*)  -->  Transaksi
+
+  Arus Kas Tunggal per Proyek (Single-Operator Cash Model):
+    Modal bersih          modal masuk dikurangi penarikan modal
+    Saldo kas di tangan   uang kas riil yang tersedia fisik/rekening pemilik
+    Biaya terealisasi     total pengeluaran belanja fisik riil ber-nota
+    Hukum Invarian:       Saldo Kas + Biaya Terealisasi === Modal Bersih
+
+================================================================================
+6. LINGKUP VERSI 1 (MODEL ARUS KAS TUNGGAL)
+================================================================================
+
+MUST (12):
+  F-01 Login pemilik tunggal (Express session, proteksi brute-force, sandi bcrypt)
+  F-02 Pengelolaan CV dan Cabang
+  F-03 Pengelolaan Proyek (wajib memilih cabang; alur status Aktif/Selesai/Arsip)
+  F-04 Kantong modal: modal masuk awal, modal tambahan, penarikan sisa modal
+  F-05 Anggaran per kategori (perencanaan biaya RAB)
+  F-06 Belanja proyek langsung (konfirmasi saldo minus dan proteksi idempoten)
+  F-09 Ringkasan keuangan proyek, indikator peringatan, dan buku kas mutasi (UI EJS responsif)
+  F-10 Pembatalan catatan (soft-delete/cancellation) dan jejak audit SQLite append-only
+  F-11 Foto bukti nota (dukungan kamera HP, kompresi otomatis, dan konversi HEIC/iPhone)
+  F-12 Dasbor portofolio proyek dan riwayat tahunan teragregasi per cabang
+  F-13 Patokan estimasi biaya per m2 dari proyek sejenis yang selesai
+  F-14 Ekspor laporan terformat (PDF via Node.js PDFKit dan Excel via ExcelJS)
+
+CATATAN PENYEDERHANAAN (SINGLE OPERATOR):
+  Fitur panjar ke pihak ketiga (F-07) dan pertanggungjawaban nota panjar/talangan (F-08)
+  dihapus dan dialihkan menjadi belanja langsung murni karena seluruh operasional proyek
+  dikelola secara mandiri oleh 1 orang pemilik/kontraktor.
+
+SHOULD:
+  F-15 Unduh seluruh data (ekspor cadangan SQLite .db via VACUUM INTO + folder foto zip)
+  F-16 Kolom catatan pajak opsional (catatan informatif, tanpa mempengaruhi saldo)
+  F-17 Salin susunan anggaran kategori dari proyek lama
+  F-18 Verifikasi dua langkah (2FA TOTP)
+
+COULD:
+  F-19 Impor catatan lama dari Excel
+  F-20 Notifikasi ringkasan email berkala
+  F-21 Kolom volume dan satuan harga pada rincian belanja
+  F-22 Widget subtotal per cabang di dasbor
+
+WON'T (versi 1):
+  - Multi-user, pembagian peran bertingkat, dan hak akses login pembeli
+  - Kas/saldo/modal di tingkat cabang; transfer saldo antarproyek
+  - Banyak CV (multi-tenancy)
+  - Fitur utang toko/kredit material konstruksi (USER: seluruh transaksi berbasis kas)
+  - Perhitungan pajak PPN/PPh otomatis
+  - Mode offline sinkronisasi dua arah penuh (Full PWA Offline DB)
+  - Integrasi payment gateway atau API bank
+  - Jadwal kurva S dan progres fisik persentase konstruksi
+  - Laporan akuntansi PSAK penuh (Jurnal umum berpasangan, neraca, laba-rugi)
+  - Multi-currency (mata uang selain IDR Rupiah)
+
+
+================================================================================
+7. KEBUTUHAN FUNGSIONAL
+================================================================================
+
+Format kriteria penerimaan: "Diberikan ... ketika ... maka ...". Setiap kriteria
+dapat diuji secara otomatis atau manual.
+
+--------------------------------------------------------------------------------
+F-01  LOGIN PEMILIK (SATU AKUN)                                        [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik tunggal, saya ingin masuk ke sistem secara aman agar data
+keuangan CV dan proyek saya tidak dapat diakses pihak luar.
+Kriteria:
+  [ ] Akun pemilik dibuat melalui skrip inisialisasi awal (CLI setup/seeder Node.js).
+      Tidak ada form registrasi publik dan sistem menolak pembuatan akun kedua.
+  [ ] Email dan sandi cocok -> membuat sesi Express session aman dan masuk ke dasbor.
+  [ ] Sandi di-hash menggunakan algoritma Bcrypt (salt rounds >= 10).
+  [ ] Percobaan gagal 5 kali berturut-turut dalam 15 menit -> akun terkunci sementara
+      selama 15 menit menggunakan middleware express-rate-limit. Pesan: "Email atau kata sandi tidak valid".
+  [ ] Akses route data, unduhan foto, dan API tanpa sesi aktif diarahkan ke halaman login.
+  [ ] Sesi login kedaluwarsa setelah 14 hari tidak aktif (disertai tombol Keluar eksplisit).
+  [ ] Fitur Lupa Sandi: mengirim tautan token acak kriptografis ke email pemilik, valid 60 menit.
+  [ ] Ganti sandi dari profil akun mewajibkan verifikasi sandi lama.
+
+--------------------------------------------------------------------------------
+F-02  PENGELOLAAN CV DAN CABANG                                        [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin menetapkan identitas CV dan membuat daftar
+cabang agar seluruh proyek dapat dikelompokkan dengan rapi.
+Aturan terkait: BR-22, BR-24, A-30, A-31, A-32
+Kriteria:
+  [ ] Nama CV (tunggal, wajib, 3-100 karakter) dan logo CV opsional dapat diatur
+      di menu profil perusahaan. Tampil di kop surat seluruh laporan.
+  [ ] Entitas Cabang memiliki atribut: Nama Cabang (wajib, unik, 3-60 karakter),
+      Kota (opsional), Catatan (opsional), dan Status (Aktif / Nonaktif).
+  [ ] Nama cabang kembar (case-insensitive) ditolak oleh sistem.
+  [ ] Cabang tidak dapat dihapus permanen jika sudah pernah memiliki proyek;
+      cabang hanya dapat dinonaktifkan statusnya (BR-24).
+  [ ] Cabang berstatus Nonaktif tidak muncul dalam pilihan dropdown proyek baru. Proyek
+      lama yang berada di cabang tersebut tetap dapat diakses dan tetap masuk laporan.
+  [ ] Saat pertama kali sistem dijalankan dan belum ada cabang, halaman pembuatan proyek
+      memblokir input dan menampilkan panduan: "Buat minimal satu cabang terlebih dahulu".
+  [ ] Cabang tidak memiliki atribut kas, saldo, atau modal. Tidak ada fitur input saldo cabang.
+
+--------------------------------------------------------------------------------
+F-03  PENGELOLAAN PROYEK                                               [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mendaftarkan proyek pembangunan di bawah cabang
+tertentu agar aliran uang tiap proyek terpisah dan terpantau jelas.
+Data Proyek: Nama Proyek (wajib, unik), Cabang (wajib, pilih satu), Jenis Bangunan
+(Rumah, Ruko, Renovasi, Gedung, Lainnya), Luas Bangunan m2 (opsional, bilangan bulat > 0),
+Kota/Lokasi (opsional), Tanggal Mulai (wajib), Status (Aktif, Selesai, Arsip), Catatan.
+Aturan terkait: BR-13, BR-22, A-32, A-33
+Kriteria:
+  [ ] Proyek baru terdaftar dengan saldo kas awal Rp0 dan modal awal Rp0.
+  [ ] Nama proyek kembar ditolak. Luas bangunan <= 0 ditolak. Pendaftaran proyek tanpa
+      memilih cabang ditolak sistem (A-32).
+  [ ] Memindahkan proyek ke cabang lain memerlukan konfirmasi dan catatan alasan pemindahan.
+      Aksi perpindahan dicatat di jejak audit. Riwayat laporan tahunan selanjutnya
+      menampilkan proyek pada cabang SAAT INI (BR-22, A-33).
+  [ ] Perubahan status menjadi "Selesai" DITOLAK bila panjar beredar > 0 atau
+      talangan belum diganti > 0. Pesan penolakan merinci nominal sisa yang belum tuntas.
+  [ ] Proyek berstatus Selesai atau Arsip mengunci penambahan transaksi baru.
+  [ ] Pemilik dapat mengembalikan status proyek dari Selesai/Arsip kembali ke "Aktif"
+      (Re-open) dengan memasukkan alasan pembukaan kembali yang terekam di jejak audit.
+  [ ] Perubahan metadata penting (jenis, luas, cabang, tanggal mulai) dicatat di jejak audit.
+
+--------------------------------------------------------------------------------
+F-04  KANTONG MODAL (MASUK, TAMBAHAN, PENARIKAN SISA)                 [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mencatat setoran modal awal, penambahan modal kerja,
+serta penarikan sisa modal agar saldo kas mencerminkan dana nyata proyek.
+Aturan terkait: BR-01, BR-02, BR-08, BR-14
+Kriteria:
+  [ ] Setoran Modal Masuk Awal Rp200.000.000 -> Saldo kas = Rp200.000.000,
+      Modal bersih = Rp200.000.000.
+  [ ] Tambahan Modal Rp50.000.000 di tengah proyek -> Saldo kas naik menjadi Rp250.000.000,
+      Modal bersih naik menjadi Rp250.000.000. Riwayat membedakan modal awal vs tambahan.
+  [ ] Penarikan Modal Rp40.000.000 saat saldo kas Rp40.000.000 -> Saldo kas menjadi Rp0,
+      Modal bersih berkurang menjadi Rp210.000.000.
+  [ ] Penarikan modal melebihi saldo kas saat itu DITOLAK: "Penarikan melebihi saldo kas proyek".
+  [ ] Penarikan modal yang menyebabkan modal bersih menjadi negatif (< 0) DITOLAK.
+  [ ] Nominal input <= 0 atau melebihi plafon Rp10.000.000.000 ditolak sistem (BR-01).
+  [ ] Setiap form submit modal dilengkapi token idempoten untuk mencegah dobel input.
+
+--------------------------------------------------------------------------------
+F-05  ANGGARAN BIAYA PER KATEGORI                                      [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin menetapkan pagu anggaran per kategori biaya agar
+mendapatkan peringatan dini saat realisasi belanja mendekati batas rencana.
+Aturan terkait: BR-10, BR-16, BR-17, A-18, A-20
+Kriteria:
+  [ ] Pemilik dapat mengalokasikan target anggaran untuk masing-masing kategori belanja.
+  [ ] Nilai pagu anggaran per kategori dapat direvisi kapan saja dengan menyertakan alasan.
+      Riwayat revisi anggaran tersimpan lengkap beserta versi sebelumnya.
+  [ ] Sisa anggaran kategori dihitung otomatis: Pagu Anggaran - Realisasi Biaya Kategori.
+  [ ] Total alokasi anggaran melebihi modal bersih memicu indikator peringatan warna kuning
+      pada dasbor proyek tanpa memblokir pencatatan transaksi (A-18).
+  [ ] Master kategori default disediakan sistem (BR-16). Pemilik dapat menambah kategori kustom.
+      Kategori yang telah memiliki catatan transaksi tidak dapat dihapus, hanya dinonaktifkan.
+  [ ] Anggaran bernilai negatif (< 0) ditolak.
+
+--------------------------------------------------------------------------------
+F-06  PENGELUARAN LANGSUNG                                             [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mencatat belanja material/jasa yang saya bayar
+langsung secara tunai/transfer agar saldo kas proyek seketika terpotong.
+Data Transaksi: Tanggal Transaksi, Kategori Biaya (pilih satu), Nominal (Rupiah),
+Uraian Keterangan (3-200 karakter), Nama Toko/Vendor (opsional), Bukti Foto (opsional).
+Aturan terkait: BR-01, BR-02, BR-09, BR-14, BR-16
+Kriteria:
+  [ ] Kas Rp200.000.000, belanja semen langsung Rp12.500.000 -> Saldo kas menjadi Rp187.500.000,
+      Biaya terealisasi menjadi Rp12.500.000, realisasi kategori Material bertambah Rp12.500.000.
+  [ ] Nominal transaksi melebihi saldo kas -> sistem menampilkan dialog konfirmasi peringatan:
+      "Transaksi ini menyebabkan saldo kas menjadi minus (Rp[x]). Tetap lanjutkan?" (BR-09).
+  [ ] Tanggal transaksi di masa depan (melebihi hari ini WIB) ditolak. Tanggal transaksi
+      sebelum tanggal mulai proyek ditolak sistem.
+  [ ] Pengiriman formulir dilindungi token idempoten: klik ganda tombol Simpan hanya
+      menghasilkan tepat SATU mutasi kas tercatat di SQLite.
+  [ ] Proyek berstatus Selesai atau Arsip menolak form pengeluaran langsung.
+
+--------------------------------------------------------------------------------
+F-07  PANJAR KE PEMBELI MATERIAL                                       [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mencatat pemberian uang muka (panjar) kepada
+mandor/pembeli material agar dana yang masih dibawa mereka terpantau jelas.
+Aturan terkait: BR-02, BR-04, BR-21
+Kriteria:
+  [ ] Panjar diberikan Rp10.000.000 -> Saldo kas berkurang Rp10.000.000, Panjar beredar bertambah
+      Rp10.000.000, Biaya terealisasi TIDAK berubah (BR-04, S-A langkah 3).
+  [ ] Pembeli dipilih dari daftar yang ada, atau dapat langsung mengetik nama baru secara cepat.
+  [ ] Satu pembeli dapat memegang lebih dari satu panjar terbuka pada satu atau beberapa proyek.
+  [ ] Panjar yang menyebabkan kas minus memunculkan konfirmasi peringatan (BR-09).
+  [ ] Halaman proyek menyediakan tabel "Daftar Panjar Belum Tuntas" yang menampilkan nama pembeli,
+      tanggal penyerahan, sisa panjar, dan umur panjar dalam hitungan hari.
+  [ ] Tidak ada pembatasan waktu kadaluwarsa panjar; panjar tetap aktif hingga tuntas dilaporkan.
+
+--------------------------------------------------------------------------------
+F-08  NOTA PANJAR, PENGEMBALIAN SISA, DAN GANTI UANG TALANGAN          [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mencatat pelaporan nota belanja dari pembeli,
+menerima kembali sisa uang panjar, atau mengganti uang talangan pembeli agar kewajiban tuntas.
+Aturan terkait: BR-02, BR-04, BR-05, BR-06, BR-07, BR-15, A-27, A-28
+Kriteria:
+  [ ] NOTA MEMOTONG PANJAR: Panjar Rp10.000.000, nota pasir Rp7.300.000 dilaporkan -> Biaya
+      terealisasi bertambah Rp7.300.000, Panjar beredar berkurang menjadi Rp2.700.000,
+      Saldo kas tidak berubah (S-A langkah 4).
+  [ ] PENGEMBALIAN SISA TUNAI: Pembeli menyetor sisa uang tunai Rp2.700.000 -> Saldo kas
+      bertambah Rp2.700.000, Panjar beredar menjadi Rp0, status panjar otomatis "Lunas/Selesai".
+  [ ] NOTA MELEBIHI PANJAR (TALANGAN): Sisa panjar Rp10.000.000, nota belanja Rp12.000.000 ->
+      Sistem memotong penuh sisa panjar (BP = Rp10.000.000), mencatat Biaya terealisasi
+      sebesar Rp12.000.000, dan otomatis membentuk kewajiban TALANGAN sebesar Rp2.000.000.
+      Panjar beredar menjadi Rp0 (Lunas), Talangan belum diganti bertambah Rp2.000.000.
+  [ ] NOTA TANPA PANJAR TERBUKA: Pembeli tanpa panjar menyerahkan nota Rp1.500.000 -> Sistem
+      mencatat Biaya terealisasi Rp1.500.000 dan Talangan belum diganti Rp1.500.000 (BP = Rp0,
+      TG = Rp1.500.000). Kas dan panjar beredar tidak berubah.
+  [ ] NOTA CAMPURAN BEBERAPA KATEGORI (A-27): Jika 1 lembar nota mencakup beberapa kategori biaya,
+      pemilik menginput beberapa catatan terpisah dengan memilih panjar yang sama. Sistem
+      memotong sisa panjar secara sekuensial (FIFO) sampai panjar habis; nilai selebihnya
+      otomatis beralih menjadi talangan. Pemilik dapat mengisi field "No. Nota Referensi"
+      yang sama untuk mengaitkan baris-baris transaksi tersebut.
+  [ ] PENGGANTIAN UANG TALANGAN: Pemilik mengganti uang talangan pembeli -> Saldo kas terpotong
+      sebesar nominal penggantian, dan saldo Talangan Belum Diganti berkurang sebesar nominal
+      tersebut. Pembayaran melebihi total talangan nota terkait ditolak sistem.
+  [ ] Penggantian talangan yang menyebabkan saldo kas minus memicu konfirmasi dialog (BR-09).
+  [ ] Pengembalian sisa tunai melebihi sisa panjar terbuka ditolak sistem.
+  [ ] Tanggal nota belanja atau pengembalian sebelum tanggal penyerahan panjar ditolak sistem (BR-15).
+
+--------------------------------------------------------------------------------
+F-09  RINGKASAN PROYEK, PERINGATAN, DAN BUKU KAS                       [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin melihat ringkasan visual kondisi keuangan proyek
+dan buku kas mutasi harian agar dapat mengontrol pengeluaran dengan akurat.
+Aturan terkait: BR-02, BR-03, BR-09, BR-10
+Kriteria:
+  [ ] Halaman (render EJS) menyajikan 5 kartu metrik utama: Modal Bersih, Saldo Kas Proyek,
+      Panjar Beredar, Biaya Terealisasi, serta Talangan Belum Diganti (bila > 0).
+  [ ] Rumus invarian BR-03 dipastikan selalu seimbang (100% konsisten) di antarmuka.
+  [ ] Tabel progres anggaran menampilkan alokasi, realisasi, sisa saldo anggaran, serta lencana:
+      "Aman" (< 80%), "Waspada" (80% - 100%), atau "Melebihi Anggaran" (> 100%).
+  [ ] Indikator saldo kas negatif ditampilkan dengan warna merah menyala dan badge peringatan.
+  [ ] Buku Kas Mutasi menampilkan riwayat kronologis per tanggal: jenis transaksi, uraian,
+      arus uang masuk/keluar, saldo kas berjalan, dan thumbnail bukti foto.
+  [ ] Tersedia filter buku kas: rentang tanggal, kategori biaya, jenis mutasi, dan nama pembeli.
+  [ ] Catatan transaksi yang dibatalkan ditampilkan tercoret rapi dan nominalnya dinolkan
+      dari perhitungan saldo berjalan.
+  [ ] Proyek baru tanpa riwayat menyajikan pesan panduan bersahabat: "Belum ada transaksi.
+      Mulai dengan mencatat modal masuk pertama".
+
+--------------------------------------------------------------------------------
+F-10  PEMBATALAN TRANSAKSI (KOREKSI) DAN JEJAK AUDIT                   [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin membatalkan transaksi yang salah input dengan
+tetap menjaga keutuhan riwayat agar pembukuan tidak dapat dimanipulasi.
+Aturan terkait: BR-11, BR-12
+Kriteria:
+  [ ] Transaksi moneter TIDAK DAPAT dihapus permanen (*hard delete*). Koreksi dilakukan
+      melalui aksi Pembatalan (*Cancellation*) dengan alasan wajib (minimal 5 karakter).
+  [ ] Transaksi yang dibatalkan seketika dikeluarkan dari akumulasi saldo kas, panjar,
+      biaya, dan laporan, namun rekam jejaknya tetap tersimpan di tabel SQLite.
+  [ ] Koreksi nominal atau kategori dilakukan dengan membatalkan catatan yang salah dan
+      membuat catatan baru yang tertaut (*supersedes link*).
+  [ ] Edit teks keterangan uraian atau penambahan foto diperbolehkan tanpa membatalkan transaksi;
+      nilai sebelum dan sesudah perubahan dicatat di tabel `audit_logs` append-only.
+  [ ] Integritas Pembatalan Berantai (BR-12):
+      - Pembatalan transaksi panjar DITOLAK jika masih mengikat nota atau pengembalian aktif.
+      - Pembatalan nota belanja DITOLAK jika masih memiliki transaksi penggantian talangan aktif.
+      - Pembatalan modal masuk DITOLAK jika menyebabkan modal bersih menjadi < 0.
+  [ ] Transaksi Penggantian Talangan (GT) dapat dibatalkan secara mandiri; pembatalannya
+      mengembalikan saldo kas (kas bertambah) dan mengembalikan saldo talangan pembeli.
+  [ ] Sistem mencegah pembatalan ganda pada transaksi yang sama (*idempotent cancellation*).
+
+--------------------------------------------------------------------------------
+F-11  FOTO BUKTI NOTA & PENANGANAN DOKUMEN                             [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin melampirkan foto nota belanja langsung dari HP
+dengan proses cepat tanpa kendala format file.
+Aturan terkait: BR-20, Q-01
+Kriteria:
+  [ ] Mendukung unggah 1 hingga 3 foto per catatan transaksi (dari kamera atau galeri).
+  [ ] Sistem otomatis mengompresi gambar di sisi klien (*client-side resizing*) sebelum
+      diunggah ke Express melalui `multer`, dengan target ukuran file rata-rata <= 1 MB.
+  [ ] Foto iPhone dalam format HEIC/HEIF didukung penuh: dikonversi menjadi format JPEG standar
+      secara otomatis di browser sebelum pengunggahan.
+  [ ] Lampiran foto bersifat opsional. Transaksi tanpa foto ditandai lencana "Tanpa Bukti Nota".
+  [ ] Gangguan koneksi internet saat upload foto tidak membatalkan transaksi keuangan; sistem
+      menyimpan data angka terlebih dahulu dan menampilkan status "Foto tertunda / coba lagi".
+  [ ] File non-gambar (seperti exe, zip, pdf palsu) divalidasi MIME type dan ditolak tegas.
+  [ ] Akses ke file foto nota disimpan di folder private dan hanya dapat dialirkan melalui
+      Express route middleware yang memverifikasi sesi login aktif pemilik.
+
+--------------------------------------------------------------------------------
+F-12  DASBOR PORTOFOLIO & RIWAYAT TAHUNAN PER CABANG                  [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin memantau seluruh proyek di semua cabang serta melihat
+rekap riwayat tahunan agar memahami tren pengeluaran per cabang.
+Aturan terkait: BR-19, BR-22, BR-23, A-30, A-33, A-36
+Kriteria:
+  [ ] Dasbor Utama menampilkan seluruh proyek aktif yang dikelompokkan berdasarkan Cabang.
+      Setiap kartu proyek menyajikan: Saldo Kas, Panjar Beredar, Biaya Realisasi, dan Peringatan.
+  [ ] Dasbor TIDAK menampilkan subtotal saldo kas per cabang guna mencegah salah tafsir
+      bahwa cabang memegang uang fisik (A-30, A-36).
+  [ ] Arus kas masing-masing proyek berdiri sendiri secara independen; tidak ada saldo
+      yang tercampur antarproyek meskipun beroperasi pada periode waktu yang sama (BR-19).
+  [ ] Halaman Riwayat Tahunan: Pemilik memilih tahun kalender (WIB). Sistem menampilkan tabel
+      per Cabang berisi: Total Modal Masuk, Total Penarikan Modal, dan Total Biaya Realisasi.
+  [ ] Setiap cabang pada tabel riwayat tahunan dapat diperluas (*expandable*) untuk melihat rincian
+      per Proyek, lalu per Kategori Belanja, hingga rincian per Bulan.
+  [ ] Tersedia filter tampilan tren multi-tahun untuk satu cabang terpilih.
+  [ ] Proyek yang pernah dipindahkan cabang dihitung penuh pada cabang SAAT INI (BR-22, A-33).
+
+--------------------------------------------------------------------------------
+F-13  REFERENSI ESTIMASI BIAYA PROYEK SERUPA (PATOKAN M2)             [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin melihat rata-rata biaya per meter persegi dari proyek-proyek
+sebelumnya yang sejenis untuk memproyeksikan kebutuhan anggaran proyek baru.
+Aturan terkait: BR-18, BR-25, A-34
+Kriteria:
+  [ ] Parameter Proyek Pembanding: Kategori jenis bangunan sama, berstatus "Selesai",
+      memiliki luas bangunan > 0 m2, dan bersumber dari SEMUA cabang CV (A-34).
+  [ ] Metrik yang disajikan: Jumlah proyek pembanding, Biaya per m2 (Minimum, Median, Maksimum),
+      serta Rentang Proyeksi Biaya untuk luas proyek saat ini (Min s.d. Maks).
+  [ ] Menampilkan tabel daftar proyek referensi: Nama Proyek, Cabang, Tahun Selesai, Luas m2,
+      dan Biaya Realisasi Akhir.
+  [ ] Terdapat penafian jelas: "Angka patokan berdasarkan data historis internal (belum disesuaikan inflasi)".
+  [ ] Jika data pembanding sejenis kurang dari 2 proyek, sistem menampilkan informasi informatif:
+      "Data belum mencukupi untuk membentuk patokan (dibutuhkan minimal 2 proyek selesai sejenis)".
+  [ ] Pada proyek yang telah selesai, sistem membandingkan realisasi akhir proyek tersebut
+      terhadap rentang patokan historisnya.
+
+--------------------------------------------------------------------------------
+F-14  EKSPOR LAPORAN KEUANGAN (PDF & EXCEL/CSV)                        [Must]
+--------------------------------------------------------------------------------
+Cerita: Sebagai pemilik, saya ingin mengunduh laporan keuangan proyek dalam bentuk PDF
+siap cetak atau lembar kerja Excel agar mudah diarsipkan atau dibagikan ke pihak berkepentingan.
+Aturan terkait: BR-01, Q-03
+Kriteria:
+  [ ] Ekspor Laporan per Proyek (Pilihan periode: Keseluruhan, Bulan Berjalan, atau Rentang Tanggal):
+      - Format PDF: Layout rapi dibuat melalui template server Node.js, memuat Kop Perusahaan
+        (Nama & Logo CV bila ada), Ringkasan 5 Metrik, Realisasi vs Anggaran, Daftar Panjar Terbuka,
+        dan Buku Kas Mutasi.
+      - Format Excel/CSV: Seluruh baris transaksi dengan kolom terstruktur siap olah via `exceljs`.
+  [ ] Ekspor Laporan Riwayat Tahunan per Cabang: PDF dan Excel/CSV.
+  [ ] Seluruh angka pada dokumen ekspor identik 100% dengan angka pada layar aplikasi.
+  [ ] Tanggal cetak (WIB) dan penanda tangan tercantum otomatis di bagian kaki dokumen.
+  [ ] Opsi pilihan: "Sertakan catatan yang dibatalkan" (default: tidak dicentang).
+  [ ] Pencegahan Injeksi Formula CSV: Seluruh teks uraian yang diawali karakter sensitif
+      formula spreadsheet ("=", "+", "-", "@") otomatis di-escape dengan tanda kutip tunggal.
+
+--------------------------------------------------------------------------------
+FITUR TAHAP BERIKUTNYA (SHOULD & COULD)
+--------------------------------------------------------------------------------
+  F-15 Unduh Seluruh Data Mandiri (Backup): Mengunduh arsip zip berisi snapshot file database SQLite
+       (dibuat aman via `VACUUM INTO`) dan folder lampiran foto.
+  F-16 Catatan Pajak Informatif: Kolom opsional saat input nota "Termasuk Pajak Rp...", hanya bersifat
+       catatan administratif dan tidak mempengaruhi perhitungan kas bersih proyek (A-13).
+  F-17 Salin Anggaran: Kemampuan memilih proyek lama untuk menyalin daftar kategori & target anggarannya.
+  F-18 Otentikasi 2 Langkah (2FA TOTP): Integrasi kode 6 digit via aplikasi authenticator ponsel.
+  F-19 Impor Data Excel; F-20 Notifikasi Email Peringatan; F-21 Input Volume & Satuan Belanja;
+  F-22 Widget Ringkasan Dinamis per Cabang di Dasbor.
+
+
+================================================================================
+8. ATURAN BISNIS DAN SKENARIO UJI RUJUKAN
+================================================================================
+
+Seluruh formula perhitungan mengabaikan transaksi yang berstatus Dibatalkan (cancelled).
+
+BR-01  Presisi Moneter: Semua nilai mata uang disimpan sebagai bilangan bulat 64-bit (INTEGER di SQLite,
+       BigInt / Number di JavaScript). Tidak ada sen atau pecahan desimal. Nominal transaksi wajib > 0
+       dan <= Rp10.000.000.000 per catatan.
+
+BR-02  Definisi Angka & Neraca Kas Proyek:
+         Modal Bersih            = MM - MT
+         Saldo Kas Proyek        = MM - MT - PL - PJ + PK - GT
+         Panjar Beredar          = PJ - BP - PK
+         Biaya Terealisasi       = PL + NP
+         Talangan Belum Diganti  = TG - GT
+       Variabel Transaksi:
+         MM  Modal Masuk (Awal & Tambahan)     MT  Penarikan Sisa Modal
+         PL  Pengeluaran Langsung Tunai/Bank    PJ  Panjar Diberikan ke Pembeli
+         NP  Nilai Nota Belanja PENUH           BP  Bagian Nota yang Tertutup Panjar
+         TG  Talangan Terbentuk (NP - BP)       PK  Pengembalian Sisa Panjar Tunai
+         GT  Penggantian Uang Talangan oleh Pemilik
+
+BR-03  HUKUM INVARIAN (Keseimbangan Absolut Kas Proyek):
+       Pada setiap proyek, setiap saat, rumus invarian berikut wajib bernilai BENAR:
+         Saldo Kas + Panjar Beredar + Biaya Terealisasi - Talangan Belum Diganti = Modal Bersih
+
+       Pembuktian Aljabar:
+         (MM - MT - PL - PJ + PK - GT) + (PJ - BP - PK) + (PL + NP) - (TG - GT)
+         = MM - MT - PL + PL - PJ + PJ + PK - PK - GT + GT + NP - BP - TG
+         = (MM - MT) + (NP - BP - TG)
+         Karena secara definisi TG = NP - BP, maka (NP - BP - TG) = 0.
+         Hasil akhir: MM - MT (Modal Bersih). Q.E.D.
+
+BR-04  Status Biaya Panjar: Penyerahan panjar bukan merupakan beban biaya. Beban biaya
+       proyek hanya diakui pada TANGGAL NOTA sebesar nilai nota riil yang dilaporkan.
+
+BR-05  Alokasi Nota terhadap Panjar & Nota Multi-Kategori:
+       - Ketika nota belanja dilaporkan terhadap panjar terbuka:
+         BP = MIN(Nilai Nota, Sisa Panjar Pembeli); TG = Nilai Nota - BP.
+       - Jika nota bernilai lebih besar dari panjar, kelebihannya otomatis menjadi talangan pembeli.
+       - Untuk nota multi-kategori (A-27), setiap baris kategori diproses berurutan (sekuensial):
+         baris pertama memotong sisa panjar hingga habis, baris berikutnya otomatis menghasilkan talangan.
+       - Sisa panjar dihitung: PJ - BP - PK (tidak pernah bernilai negatif).
+
+BR-06  Pengembalian Sisa Panjar: Nominal pengembalian tunai wajib <= Sisa Panjar terbuka pada panjar itu.
+
+BR-07  Penggantian Uang Talangan: Nominal penggantian kas wajib <= Sisa Talangan Belum Diganti
+       pada pembeli/nota yang bersangkutan.
+
+BR-08  Batas Penarikan Modal: Penarikan modal proyek hanya diizinkan jika nominalnya <= Saldo Kas saat itu,
+       dan penarikan tersebut tidak membuat modal bersih menjadi bernilai negatif (< 0).
+
+BR-09  Ketentuan Saldo Kas Minus: Saldo kas diperbolehkan bernilai negatif (< Rp0) akibat pengeluaran
+       langsung, pemberian panjar, atau penggantian talangan mendesak, dengan kewajiban konfirmasi peringatan
+       dan tampilan lencana merah pada sistem. Penarikan modal tidak boleh membuat kas minus (BR-08).
+
+BR-10  Status Ambang Batas Anggaran Kategori:
+         - Aman               : Realisasi < 80% dari Anggaran.
+         - Waspada (Kuning)   : Realisasi 80% s.d. 100% dari Anggaran.
+         - Melebihi (Merah)   : Realisasi > 100% dari Anggaran.
+
+BR-11  Ketetapan Jejak Audit: Catatan transaksi tidak boleh dihapus dari basis data. Koreksi dilakukan
+       melalui pembatalan berpenjelasan. Log audit bersifat append-only: waktu (WIB), alamat IP,
+       data sebelum, dan data sesudah.
+
+BR-12  Aturan Rantai Pembatalan (Cascade Protection):
+         - Pembatalan transaksi PANJAR ditolak bila sudah memiliki nota belanja atau pengembalian aktif.
+         - Pembatalan transaksi NOTA BELANJA ditolak bila sudah memiliki pembayaran penggantian talangan aktif.
+         - Pembatalan MODAL MASUK ditolak bila menyebabkan Modal Bersih proyek menjadi < 0.
+         - Pembatalan transaksi PENGGANTIAN TALANGAN (GT) diizinkan secara mandiri; efeknya mengembalikan
+           kas proyek (bertambah) dan memulihkan nilai talangan pembeli yang belum lunas.
+         - Pembatalan yang menyebabkan saldo kas minus diizinkan setelah melewati dialog konfirmasi (BR-09).
+
+BR-13  Siklus Hidup Status Proyek:
+         - Status Proyek terdiri dari: Aktif, Selesai, dan Arsip.
+         - Perubahan status ke "Selesai" hanya valid jika Panjar Beredar = Rp0 dan Talangan Belum Diganti = Rp0.
+         - Sisa saldo kas dapat ditarik terlebih dahulu menggunakan menu Penarikan Sisa Modal (F-04)
+           hingga Rp0 sebelum proyek dialihkan ke status Selesai.
+         - Proyek Selesai/Arsip mengunci seluruh form transaksi baru, kecuali dibuka kembali (Re-open) ke Aktif.
+
+BR-14  Validasi Tanggal: Tanggal transaksi keuangan wajib <= Hari Ini (WIB) dan >= Tanggal Mulai Proyek.
+       Waktu penyimpanan menggunakan zona waktu WIB (UTC+7).
+
+BR-15  Konsistensi Kronologi Nota: Tanggal nota belanja dan pengembalian panjar wajib >= Tanggal penyerahan
+       panjar terkait. Tanggal penggantian talangan wajib >= Tanggal nota talangan terkait.
+
+BR-16  Struktur Kategori Belanja: Kategori awal sistem: Material, Upah Kerja, Sewa Alat, Subkontraktor,
+       Transportasi, Operasional, Perizinan, dan Lain-lain. Satu baris catatan hanya untuk satu kategori.
+
+BR-17  Ketentuan Anggaran: Anggaran kategori wajib >= Rp0. Total anggaran melampaui modal memicu peringatan kuning.
+
+BR-18  Formula Patokan Biaya Proyek Serupa:
+         Biaya per m2 = Total Biaya Realisasi Proyek / Luas Bangunan (m2).
+         Syarat pembanding: Jenis bangunan sama, status Selesai, Luas > 0 m2, dari SEMUA cabang (A-34).
+         Syarat aktivasi: Minimal terdapat 2 proyek selesai pembanding.
+         Estimasi Proyeksi = Luas Proyek Baru x Rentang Biaya per m2 (Min, Median, Maks).
+
+BR-19  Isolasi Saldo Proyek: Saldo uang masing-masing proyek murni berdiri sendiri (*single pocket*).
+       Tidak ada mekanisme transfer uang antarproyek maupun antarcabang.
+
+BR-20  Standar Berkas Foto Bukti: Format JPG, PNG, WebP, dan HEIC (iPhone). Maksimal 3 foto per transaksi,
+       ukuran asli maksimal 10 MB per berkas. Foto HEIC wajib dikonversi otomatis menjadi JPG dan
+       dikompresi di sisi browser hingga <= 1 MB sebelum pengunggahan.
+
+BR-21  Entitas Pembeli: Data pembeli hanya berupa Nama Panggilan/Kerja. Pembeli yang memiliki riwayat
+       transaksi tidak dapat dihapus, hanya dinonaktifkan.
+
+BR-22  Peran Cabang & Mutasi Proyek: Cabang murni berfungsi sebagai pengelompokan administratif.
+       Setiap proyek terikat ke tepat satu cabang. Perpindahan cabang proyek dicatat di jejak audit.
+       Laporan riwayat tahunan mengelompokkan proyek berdasarkan cabang proyek SAAT INI (A-33).
+
+BR-23  Periodesasi Laporan Tahunan: Biaya realisasi diagregasikan menurut tanggal pengeluaran langsung
+       atau tanggal nota belanja; modal masuk dan penarikan diagregasikan menurut tanggal mutasinya.
+       Tahun laporan mengacu pada tahun kalender masehi (WIB).
+
+BR-24  Kekekalan Data Cabang: Cabang tidak dapat dihapus permanen jika sudah pernah menaungi proyek.
+       Cabang nonaktif tidak dapat dipilih saat pembuatan proyek baru.
+
+BR-25  Standar Pembulatan: Pembulatan pecahan matematika hanya diterapkan pada kalkulasi median patokan m2
+       ke rupiah terdekat (half-up) menggunakan satu modul pembulatan terpusat di JavaScript.
+
+
+SKENARIO UJI RUJUKAN (Angka Pasti untuk Pengujian Otomatis)
+--------------------------------------------------------------------------------
+
+S-A  Alur Normal Standar (Tanpa Talangan). Modal Awal Rp200.000.000.
+  Langkah Transaksi                Kas (Rp)     Panjar Beredar (Rp)  Biaya (Rp)   Talangan (Rp)  Modal Bersih (Rp)
+  1. Modal Masuk 200.000.000       200.000.000  0                    0            0              200.000.000
+  2. Beli Semen Langsung 12.500k   187.500.000  0                    12.500.000   0              200.000.000
+  3. Beri Panjar Mandor 10.000k    177.500.000  10.000.000           12.500.000   0              200.000.000
+  4. Nota Pasir Lapangan 7.300k    177.500.000  2.700.000            19.800.000   0              200.000.000
+  5. Mandor Setor Sisa Kas 2.700k  180.200.000  0                    19.800.000   0              200.000.000
+  Uji Invarian pada setiap langkah: Kas + Panjar + Biaya - Talangan = 200.000.000. LULUS.
+
+S-B  Alur Nota Melebihi Panjar (Terbentuk Talangan & Pelunasan). Modal Rp100.000.000.
+  1. Beri Panjar Rp10.000.000 -> Kas = Rp90.000.000, Panjar Beredar = Rp10.000.000, Biaya = Rp0.
+  2. Pembeli serahkan Nota Genteng Rp12.000.000 ->
+     Sistem hitung: BP = Rp10.000.000 (panjar tuntas), TG = Rp2.000.000 (talangan).
+     Kondisi: Biaya = Rp12.000.000, Panjar Beredar = Rp0, Talangan = Rp2.000.000, Kas = Rp90.000.000.
+     Uji Invarian: 90.000.000 + 0 + 12.000.000 - 2.000.000 = 100.000.000. LULUS.
+  3. Pemilik ganti talangan Rp2.000.000 -> Kas = Rp88.000.000, Talangan = Rp0.
+     Uji Invarian: 88.000.000 + 0 + 12.000.000 - 0 = 100.000.000. LULUS.
+  4. Upaya penggantian talangan Rp500.000 lagi ditolak sistem (talangan sudah Rp0).
+
+S-C  Penarikan Sisa Modal dan Penutupan Proyek (Lanjutan S-A).
+  Kondisi awal: Kas = Rp180.200.000, Biaya = Rp19.800.000, Panjar = 0, Talangan = 0, Modal Bersih = 200.000.000.
+  1. Pemilik menarik modal Rp180.200.000 -> Saldo kas = Rp0, Modal Bersih berkurang menjadi Rp19.800.000.
+     Uji Invarian: 0 + 0 + 19.800.000 - 0 = 19.800.000. LULUS.
+  2. Penarikan tambahan Rp1 ditolak (melebihi saldo kas).
+  3. Proyek diubah status ke "Selesai" -> Berhasil (Panjar = 0, Talangan = 0).
+
+S-D  Rantai Pembatalan Transaksi (Cascade Cancellation & Rollback).
+  Mengacu kondisi S-A langkah 4 (Kas: 177.500.000, Panjar: 2.700.000, Biaya: 19.800.000, Modal: 200.000.000):
+  1. Batalkan transaksi panjar Rp10.000.000 -> DITOLAK (karena ada nota pasir aktif).
+  2. Batalkan transaksi nota pasir Rp7.300.000 -> BERHASIL.
+     Panjar beredar kembali menjadi Rp10.000.000, Biaya kembali menjadi Rp12.500.000.
+  3. Batalkan transaksi panjar Rp10.000.000 -> BERHASIL.
+     Saldo kas kembali menjadi Rp187.500.000, Panjar beredar kembali menjadi Rp0.
+  4. Pengulangan pembatalan pada transaksi yang sama tidak merubah saldo (idempoten).
+
+S-E  Agregasi Riwayat Tahunan Multi-Cabang.
+  Cabang 1: Rumah A, Ruko B.   Cabang 2: Renovasi C.
+  Tahun   Cabang 1                              Cabang 2     Total
+  2025    90.000.000 (Ruko B)                   0            90.000.000
+  2026    78.300.000 (Rumah A 19.800.000        41.800.000   120.100.000
+                      + Ruko B 58.500.000)
+  Total realisasi Ruko B lintas tahun = Rp148.500.000 (Rp90.000.000 + Rp58.500.000).
+
+S-F  Ambang Batas Peringatan Anggaran (Pagu Material: Rp80.000.000).
+  Realisasi Rp63.999.999 -> Status "Aman" (< 80%).
+  Realisasi Rp64.000.000 -> Status "Waspada" (Tepat 80%).
+  Realisasi Rp80.000.000 -> Status "Waspada" (Tepat 100%).
+  Realisasi Rp80.000.001 -> Status "Melebihi Anggaran" (> 100%).
+
+S-G  Kalkulasi Patokan Biaya Proyek Serupa (Jenis: Rumah).
+  Data Historis Proyek Selesai:
+  - Rumah 1 (36 m2, Biaya Rp180.000.000) -> Rp5.000.000 / m2
+  - Rumah 2 (60 m2, Biaya Rp350.000.000) -> Rp5.833.333 / m2
+  - Rumah 3 (50 m2, Biaya Rp300.000.000) -> Rp6.000.000 / m2
+  Statistik: Min = Rp5.000.000, Median = Rp5.833.333, Max = Rp6.000.000 per m2.
+  Proyek Baru (Luas 45 m2):
+  Proyeksi Rentang Biaya = Rp225.000.000 s.d. Rp270.000.000 (Median Proyeksi: Rp262.500.000).
+  Jika hanya ada 1 data pembanding -> Menampilkan teks: "Data belum mencukupi".
+
+
+================================================================================
+9. KEBUTUHAN NON-FUNGSIONAL
+================================================================================
+
+  Arsitektur & Tumpukan Teknologi (Tech Stack)
+    - Runtime  : Node.js (v20+ LTS).
+    - Framework: Express.js (ringan, cepat, fleksibel).
+    - Template : EJS (.ejs) untuk Server-Side Rendering (SSR) yang terintegrasi Tailwind CSS.
+    - Database : SQLite (menggunakan driver performa tinggi `better-sqlite3` atau `sqlite3`).
+
+  Performa & Responsivitas
+    - Waktu respon server (TTFB) <= 100 ms untuk seluruh render halaman.
+    - Waktu muat halaman penuh di jaringan seluler 4G lapangan <= 2 detik.
+    - Beban aplikasi sangat rendah (1 pengguna pemilik aktif).
+
+  Integritas Moneter & Konkurensi SQLite
+    - Database SQLite dikonfigurasikan dengan mode WAL (`PRAGMA journal_mode = WAL;`)
+      dan `PRAGMA busy_timeout = 5000;`. Mode ini memungkinkan operasi baca (read) berjalan
+      bersamaan tanpa memblokir operasi tulis (write).
+    - Seluruh operasi mutasi saldo kas proyek dibungkus dalam transaksi atomik terisolasi:
+      `BEGIN IMMEDIATE TRANSACTION ... COMMIT` untuk mencegah race condition.
+    - Setiap submit form mutasi uang menyertakan Idempotency Key (UUID) yang divalidasi
+      oleh Express middleware untuk meniadakan risiko duplikasi mutasi akibat klik berulang.
+    - Tipe data nominal moneter menggunakan `INTEGER` 64-bit di SQLite (bebas floating point error).
+
+  Penanganan Media & Penyimpanan
+    - Kompresi foto dan konversi format HEIC (iPhone) dilakukan di sisi peramban web (*client-side*
+      menggunakan HTML5 Canvas / JS) sebelum transmisi jaringan ke endpoint upload Express.
+    - Estimasi file database SQLite hanya sekitar 10-50 MB per 5 tahun penggunaan intensif.
+    - Berkas foto disimpan di folder privat `data/uploads/` yang dilindungi oleh Express middleware.
+
+  Keamanan & Jejak Audit
+    - Proteksi CSRF pada seluruh route mutasi data EJS form.
+    - Keamanan sesi menggunakan cookie bertanda `HttpOnly`, `SameSite=Strict`.
+    - Rate limiting pada endpoint login menggunakan `express-rate-limit` (maksimal 5 percobaan per 15 menit).
+    - Sanitasi output teks terhadap potensi serangan XSS dan injeksi formula spreadsheet (`=`, `+`, `-`, `@`).
+
+  Keandalan Operasional Lapangan
+    - Antarmuka web responsif dioptimalkan untuk layar smartphone pekerja/pemilik di lapangan.
+    - Kontras elemen tinggi dan ukuran tombol sentuh minimal 44 x 44 piksel agar nyaman
+      digunakan di bawah terik sinar matahari.
+    - Penanganan gagal unggah foto yang anggun: mutasi angka tetap tersimpan aman di SQLite,
+      disusul status visual "Upload Foto Tertunda / Coba Lagi".
+
+  Bahasa, Mata Uang, & Waktu
+    - Antarmuka sepenuhnya berbahasa Indonesia.
+    - Satuan moneter: Rupiah (IDR).
+    - Penanda waktu: Waktu Indonesia Barat (WIB / UTC+7).
+
+
+================================================================================
+10. ASUMSI DAN KEPUTUSAN FINAL
+================================================================================
+
+A. SUDAH DIPUTUSKAN & DISETUJUI (Status Final)
+  A-05  Kantong modal terpisah penuh per proyek; tidak ada transfer antarproyek.       [USER]
+  A-15  Hanya SATU akun pengguna (pemilik tunggal).                                    [USER]
+  A-16  Penambahan modal proyek langsung menambah saldo kas proyek.                    [USER]
+  A-17  Biaya baru diakui saat nota diserahkan; sisa panjar disetor kembali tunai.    [USER]
+  A-19  Foto bukti nota tidak wajib mutlak, transaksi tanpa foto ditandai khusus.      [USER]
+  A-23  Tersedia fitur penarikan sisa modal proyek (F-04).                             [USER]
+  A-27  Nota campuran multi-kategori diinput per baris kategori dengan panjar sama.    [USER]
+  A-28  Nota belanja melebihi sisa panjar otomatis membentuk kewajiban talangan.       [USER]
+  A-30  Cabang murni pengelompokan administratif; kas/modal hanya ada di proyek.       [USER]
+  A-31  Satu CV menaungi beberapa cabang.                                              [USER]
+  A-32  Setiap proyek WAJIB terikat ke satu cabang (tidak ada proyek tanpa cabang).    [DISETUJUI]
+  A-33  Proyek boleh pindah cabang; laporan tahunan memakai cabang proyek SAAT INI.    [DISETUJUI]
+  A-34  Patokan proyek serupa mengagregasikan data proyek sejenis dari SEMUA cabang.   [DISETUJUI]
+  A-36  Dasbor portofolio TIDAK menampilkan subtotal saldo per cabang.                [DISETUJUI]
+  A-37  Laporan riwayat tahunan per cabang dapat diekspor ke PDF dan Excel.            [DISETUJUI]
+  A-38  Modal bersih proyek tidak boleh bernilai negatif (BR-08, BR-12).               [DISETUJUI]
+  A-39  Tumpukan teknologi: Express.js (Backend) + EJS (Frontend) + SQLite (DB).       [USER]
+
+B. RESOLUSI PERTANYAAN TERBUKA (Q-01 s.d. Q-03)
+  Q-01  [TERJAWAB] Foto iPhone (HEIC/HEIF) didukung penuh via konversi client-side ke JPEG.
+  Q-02  [TERJAWAB] Laporan daftar talangan belum diganti disajikan per pembeli di halaman
+        ringkasan proyek dan buku kas.
+  Q-03  [TERJAWAB] Profil CV menyediakan opsi unggah Logo CV untuk dicantumkan di kop laporan PDF.
+
+
+================================================================================
+11. STATUS TAHAP DAN LANGKAH BERIKUTNYA
+================================================================================
+
+Tahap 1 Wawancara Pengguna ................. Selesai
+Tahap 2 Riset Pasar & Registrasi Bukti ..... Selesai
+Tahap 3 Penyusunan SRS & Logika Bisnis ..... SELESAI & DISETUJUI (Dokumen Versi 1.1 Ini)
+Tahap 4 Alur Navigasi & Wireframe UI EJS ... BERIKUTNYA
+Tahap 5 Verifikasi Integritas Logika Kas ... Selesai (Pembuktian Aljabar BR-03 Tuntas)
+Tahap 6 Arsitektur Teknis, DB & Keamanan ... Selesai Dikonsep (Express.js / EJS / SQLite)
+Tahap 7 Skenario Uji Otomatis Node.js ...... Tahap Lanjutan (Test Case S-A s.d. S-G)
+Tahap 8 Konstruksi & Implementasi Kode ..... Tahap Lanjutan
+Tahap 9 Uji Lapangan & Rilis Mandiri ....... Tahap Akhir
+
+Status: Dokumen ini telah disesuaikan penuh dengan arsitektur Express.js + EJS + SQLite,
+bebas dari cacat logika, dan siap dijadikan acuan implementasi.
+
+--- akhir dokumen ---

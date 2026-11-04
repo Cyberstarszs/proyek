@@ -1,0 +1,1376 @@
+<div class="space-y-5 max-w-7xl mx-auto pb-16 sm:pb-0">
+  <%
+    // Skala Warna Kartu Finansial & Motif Pembangunan Konsisten dengan Dasbor
+    const detailModalVal = Number(saldo.modalBersih || saldo.biayaTerealisasi || 0);
+    let detailTier = {
+      level: 1,
+      nama: 'Mikro',
+      motifNama: 'Rumah & Hunian',
+      rentang: '<50 Jt',
+      saldoCardBg: 'bg-teal-50/80 border-teal-200 text-teal-950',
+      subCardBg: 'bg-teal-50/50 border-teal-200 text-teal-950',
+      saldoValColor: 'text-teal-950',
+      valColor: 'text-teal-950',
+      labelColor: 'text-teal-700',
+      catatBtnBg: 'bg-teal-700 hover:bg-teal-800 text-white',
+      badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      svgColor: 'text-teal-700/15'
+    };
+    if (detailModalVal >= 1500000000) {
+      detailTier = {
+        level: 5,
+        nama: 'Mega',
+        motifNama: 'Pencakar Langit',
+        rentang: '>1.5 M',
+        saldoCardBg: 'bg-slate-900 border-slate-800 text-white',
+        subCardBg: 'bg-slate-900/90 border-slate-800 text-white',
+        saldoValColor: 'text-emerald-400',
+        valColor: 'text-white',
+        labelColor: 'text-slate-400',
+        catatBtnBg: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+        badgeClass: 'bg-slate-900 text-white border-slate-800',
+        svgColor: 'text-white/10'
+      };
+    } else if (detailModalVal >= 500000000) {
+      detailTier = {
+        level: 4,
+        nama: 'Besar',
+        motifNama: 'Jembatan & Viaduct',
+        rentang: '500Jt-1.5M',
+        saldoCardBg: 'bg-pink-50/80 border-pink-200 text-pink-950',
+        subCardBg: 'bg-pink-50/50 border-pink-200 text-pink-950',
+        saldoValColor: 'text-pink-950',
+        valColor: 'text-pink-950',
+        labelColor: 'text-pink-700',
+        catatBtnBg: 'bg-pink-700 hover:bg-pink-800 text-white',
+        badgeClass: 'bg-pink-50 text-pink-700 border-pink-200',
+        svgColor: 'text-pink-700/15'
+      };
+    } else if (detailModalVal >= 150000000) {
+      detailTier = {
+        level: 3,
+        nama: 'Menengah',
+        motifNama: 'Crane & Rangka Baja',
+        rentang: '150-500Jt',
+        saldoCardBg: 'bg-amber-50/80 border-amber-200 text-amber-950',
+        subCardBg: 'bg-amber-50/50 border-amber-200 text-amber-950',
+        saldoValColor: 'text-amber-950',
+        valColor: 'text-amber-950',
+        labelColor: 'text-amber-700',
+        catatBtnBg: 'bg-amber-600 hover:bg-amber-700 text-white',
+        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+        svgColor: 'text-amber-700/15'
+      };
+    } else if (detailModalVal >= 50000000) {
+      detailTier = {
+        level: 2,
+        nama: 'Kecil',
+        motifNama: 'Ruko & Komersial',
+        rentang: '50-150Jt',
+        saldoCardBg: 'bg-blue-50/80 border-blue-200 text-blue-950',
+        subCardBg: 'bg-blue-50/50 border-blue-200 text-blue-950',
+        saldoValColor: 'text-blue-950',
+        valColor: 'text-blue-950',
+        labelColor: 'text-blue-700',
+        catatBtnBg: 'bg-blue-600 hover:bg-blue-700 text-white',
+        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        svgColor: 'text-blue-700/15'
+      };
+    }
+  %>
+
+  <!-- Bilah Tombol Navigasi Kembali -->
+  <div class="flex items-center justify-between gap-2 pb-0.5">
+    <a 
+      href="/" 
+      onclick="if (window.history.length > 1 && document.referrer.includes(window.location.host)) { event.preventDefault(); window.history.back(); }" 
+      class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold shadow-2xs transition-all shrink-0"
+      title="Kembali ke halaman sebelumnya"
+    >
+      <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Kembali</span>
+    </a>
+  </div>
+
+  <!-- 3 Kartu Metrik dengan Konsistensi Warna Kartu Finansial Proyek -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+    
+    <!-- Saldo Kas Proyek -->
+    <div class="relative overflow-hidden col-span-2 sm:col-span-1 p-3.5 sm:p-4 rounded-xl border transition-all <%= saldo.isKasMinus ? 'bg-rose-50 border-rose-300' : detailTier.saldoCardBg %> shadow-xs group">
+      <!-- Watermark Motif Pembangunan Sesuai Level Proyek -->
+      <% if (!saldo.isKasMinus) { %>
+        <% if (detailTier.level === 1) { %>
+          <!-- Motif Rumah -->
+          <svg class="absolute -right-3 -bottom-3 w-32 h-24 <%= detailTier.svgColor %> pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 200 140" fill="none" stroke="currentColor">
+            <path d="M50 135V75L120 25L190 75V135H50Z" stroke-width="2" fill="currentColor" fill-opacity="0.05" />
+            <path d="M42 78L120 22L198 78" stroke-width="2.5" />
+            <rect x="70" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+            <rect x="142" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+          </svg>
+        <% } else if (detailTier.level === 2) { %>
+          <!-- Motif Ruko -->
+          <svg class="absolute -right-3 -bottom-3 w-32 h-24 <%= detailTier.svgColor %> pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 200 145" fill="none" stroke="currentColor">
+            <rect x="65" y="22" width="75" height="116" rx="1.5" stroke-width="2" fill="currentColor" fill-opacity="0.05" />
+            <path d="M60 22H145" stroke-width="2.5" />
+            <line x1="65" y1="62" x2="140" y2="62" stroke-width="1.8" />
+            <line x1="65" y1="98" x2="140" y2="98" stroke-width="1.8" />
+          </svg>
+        <% } else if (detailTier.level === 3) { %>
+          <!-- Motif Crane & Baja -->
+          <svg class="absolute -right-3 -bottom-3 w-32 h-24 <%= detailTier.svgColor %> pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 150" fill="none" stroke="currentColor">
+            <line x1="82" y1="16" x2="82" y2="142" stroke-width="2" />
+            <line x1="94" y1="16" x2="94" y2="142" stroke-width="2" />
+            <line x1="38" y1="16" x2="208" y2="16" stroke-width="2.5" />
+            <path d="M88 4L42 16M88 4L130 16M88 4L170 16" stroke-width="1.2" />
+          </svg>
+        <% } else if (detailTier.level === 4) { %>
+          <!-- Motif Jembatan Gantung -->
+          <svg class="absolute -right-3 -bottom-3 w-36 h-26 <%= detailTier.svgColor %> pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 240 145" fill="none" stroke="currentColor">
+            <path d="M5 106H235" stroke-width="3" />
+            <path d="M136 12L127 106M136 12L145 106" stroke-width="2.5" />
+            <line x1="136" y1="22" x2="55" y2="106" stroke-width="1.2" />
+            <line x1="136" y1="42" x2="88" y2="106" stroke-width="1.2" />
+            <line x1="136" y1="22" x2="218" y2="106" stroke-width="1.2" />
+            <line x1="136" y1="42" x2="184" y2="106" stroke-width="1.2" />
+          </svg>
+        <% } else if (detailTier.level === 5) { %>
+          <!-- Motif Pencakar Langit -->
+          <svg class="absolute -right-3 -bottom-3 w-32 h-26 <%= detailTier.svgColor %> pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 155" fill="none" stroke="currentColor">
+            <line x1="112" y1="4" x2="112" y2="25" stroke-width="2" />
+            <path d="M102 25H122L127 62L133 105L137 148H87L91 105L97 62L102 25Z" stroke-width="2" fill="currentColor" fill-opacity="0.08" />
+            <line x1="97" y1="62" x2="127" y2="62" stroke-width="1.5" />
+            <line x1="91" y1="105" x2="133" y2="105" stroke-width="1.5" />
+          </svg>
+        <% } %>
+      <% } %>
+
+      <div class="relative z-10 flex items-center justify-between text-xs font-bold uppercase tracking-wider <%= saldo.isKasMinus ? 'text-rose-700' : (detailTier.level === 5 ? 'text-slate-300' : detailTier.labelColor) %>">
+        <span class="truncate max-w-[200px]" title="<%= proyek.nama %>"><%= proyek.nama %></span>
+        <% if (saldo.isKasMinus) { %>
+          <span class="text-[10px] bg-white text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 font-bold shrink-0">Defisit</span>
+        <% } else { %>
+          <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border <%= detailTier.badgeClass %> shrink-0"><%= detailTier.nama %></span>
+        <% } %>
+      </div>
+      <span class="relative z-10 text-xl sm:text-2xl font-extrabold font-mono block mt-1 <%= saldo.isKasMinus ? 'text-rose-700' : detailTier.saldoValColor %>">
+        Rp<%= saldo.saldoKas.toLocaleString('id-ID') %>
+      </span>
+      <span class="relative z-10 text-[11px] <%= detailTier.level === 5 && !saldo.isKasMinus ? 'text-slate-400' : 'text-slate-500' %> block mt-0.5 truncate">
+        Saldo Kas<% if (proyek.lokasi) { %> • <%= proyek.lokasi %><% } %>
+      </span>
+    </div>
+
+    <!-- Total Belanja (Konsisten dengan Warna Card Induk) -->
+    <div class="p-3.5 sm:p-4 rounded-xl border <%= detailTier.subCardBg %> shadow-xs">
+      <span class="text-[11px] sm:text-xs font-semibold <%= detailTier.labelColor %> uppercase tracking-wider block">Total Belanja</span>
+      <span class="text-base sm:text-2xl font-extrabold font-mono <%= detailTier.valColor %> block mt-1">
+        Rp<%= saldo.biayaTerealisasi.toLocaleString('id-ID') %>
+      </span>
+      <span class="text-[10px] sm:text-[11px] <%= detailTier.level === 5 ? 'text-slate-400' : 'text-slate-500' %> block mt-0.5">Realisasi belanja</span>
+    </div>
+
+    <!-- Modal Bersih (Konsisten dengan Warna Card Induk) -->
+    <div class="p-3.5 sm:p-4 rounded-xl border <%= detailTier.subCardBg %> shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] sm:text-xs font-semibold <%= detailTier.labelColor %> uppercase tracking-wider block">Modal Bersih</span>
+        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border <%= detailTier.badgeClass %>"><%= detailTier.rentang %></span>
+      </div>
+      <span class="text-base sm:text-2xl font-extrabold font-mono <%= detailTier.valColor %> block mt-1">
+        Rp<%= saldo.modalBersih.toLocaleString('id-ID') %>
+      </span>
+      <span class="text-[10px] sm:text-[11px] <%= detailTier.level === 5 ? 'text-slate-400' : 'text-slate-500' %> block mt-0.5">Suntikan modal</span>
+    </div>
+
+  </div>
+
+  <!-- Aksi Cepat Bar Atas -->
+  <% if (proyek.status === 'Aktif') { %>
+    <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center space-x-2 w-full sm:w-auto">
+        <button onclick="openModal('modal-pengeluaran')" class="flex-1 sm:flex-initial justify-center px-4 py-2 <%= detailTier.catatBtnBg %> text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+          <span>Catat Belanja</span>
+          <span class="hidden sm:inline-block ml-1 text-[10px] text-white/80 font-mono bg-black/20 px-1 py-0.2 rounded">B</span>
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+        <button 
+          type="button" 
+          onclick="openModal('modal-akhiri-proyek')" 
+          class="px-3 py-2 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all flex items-center space-x-1"
+          title="Akhiri proyek dan pindahkan ke Histori"
+        >
+          <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Akhiri Proyek</span>
+        </button>
+      </div>
+    </div>
+  <% } else if (proyek.status === 'Selesai') { %>
+    <div class="p-3.5 bg-slate-900 text-white rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+      <div class="flex items-center space-x-2.5">
+        <div class="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <div>
+          <div class="font-bold text-white text-xs sm:text-sm flex items-center space-x-1.5">
+            <span>Proyek Selesai</span>
+            <% if (proyek.tanggal_selesai) { %>
+              <span class="text-slate-400 font-normal">• Selesai pada <%= proyek.tanggal_selesai %></span>
+            <% } %>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Mulai: <%= proyek.tanggal_mulai %> <% if (proyek.tanggal_selesai) { %>• Durasi: <%= Math.max(1, Math.round((new Date(proyek.tanggal_selesai) - new Date(proyek.tanggal_mulai)) / (1000 * 60 * 60 * 24))) %> Hari<% } %> • Tersimpan di <a href="/histori" class="text-emerald-400 underline font-semibold">Histori</a>
+          </p>
+        </div>
+      </div>
+      <form action="/proyek/<%= proyek.id %>/aktifkan-kembali" method="POST" onsubmit="return confirm('Buka kembali proyek ini agar dapat mencatat transaksi lagi?')" class="shrink-0 w-full sm:w-auto">
+        <button type="submit" class="w-full sm:w-auto px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold rounded-lg transition-colors">
+          Buka Kembali Proyek
+        </button>
+      </form>
+    </div>
+  <% } else { %>
+    <div class="p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center justify-between">
+      <span>Status proyek <strong><%= proyek.status %></strong> (Terkunci).</span>
+      <button onclick="switchTab('pengaturan')" class="font-semibold text-slate-900 underline">Pengaturan</button>
+    </div>
+  <% } %>
+
+  <!-- Tab Navigasi -->
+  <div class="border-b border-slate-200">
+    <nav class="flex space-x-6 text-xs font-semibold overflow-x-auto no-scrollbar">
+      <button id="btn-tab-bukukas" onclick="switchTab('bukukas')" class="tab-btn pb-2.5 border-b-2 whitespace-nowrap <%= activeTab === 'bukukas' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800' %>">
+        Buku Kas (<%= transaksiList.length %>)
+      </button>
+      <button id="btn-tab-anggaran" onclick="switchTab('anggaran')" class="tab-btn pb-2.5 border-b-2 whitespace-nowrap <%= activeTab === 'anggaran' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800' %>">
+        Anggaran
+      </button>
+      <button id="btn-tab-patokan" onclick="switchTab('patokan')" class="tab-btn pb-2.5 border-b-2 whitespace-nowrap <%= activeTab === 'patokan' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800' %>">
+        Estimasi / m²
+      </button>
+      <button id="btn-tab-audit" onclick="switchTab('audit')" class="tab-btn pb-2.5 border-b-2 whitespace-nowrap <%= activeTab === 'audit' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800' %>">
+        Riwayat (<%= auditLogs.length %>)
+      </button>
+      <button id="btn-tab-pengaturan" onclick="switchTab('pengaturan')" class="tab-btn pb-2.5 border-b-2 whitespace-nowrap <%= activeTab === 'pengaturan' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800' %>">
+        Pengaturan
+      </button>
+    </nav>
+  </div>
+
+  <!-- TAB 1: BUKU KAS -->
+  <div id="tab-bukukas" class="tab-content <%= activeTab === 'bukukas' ? '' : 'hidden' %> space-y-3">
+    
+    <!-- Filter & Pencarian Cepat -->
+    <div class="bg-white p-3 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs shadow-sm">
+      <form id="form-filter-bukukas" action="/proyek/<%= proyek.id %>" method="GET" class="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="tab" value="bukukas">
+        <input type="hidden" id="filter-jenis-val" name="jenis" value="<%= filterJenis || '' %>">
+        
+        <!-- Pilihan Jenis Transaksi 1-Tap (Pill Segmented) -->
+        <div class="inline-flex items-center p-0.5 bg-slate-100 rounded-lg">
+          <button 
+            type="button" 
+            onclick="pilihFilterJenis('')" 
+            class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all <%= !filterJenis ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800' %>"
+          >
+            Semua
+          </button>
+          <button 
+            type="button" 
+            onclick="pilihFilterJenis('PENGELUARAN_LANGSUNG')" 
+            class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all <%= filterJenis === 'PENGELUARAN_LANGSUNG' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800' %>"
+          >
+            Belanja
+          </button>
+          <button 
+            type="button" 
+            onclick="pilihFilterJenis('MODAL_MASUK')" 
+            class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all <%= filterJenis === 'MODAL_MASUK' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800' %>"
+          >
+            Modal
+          </button>
+        </div>
+
+        <select name="kategori_id" onchange="this.form.submit()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900">
+          <option value="">Semua Kategori</option>
+          <% kategoriList.forEach(k => { %>
+            <option value="<%= k.id %>" <%= filterKategori === k.id ? 'selected' : '' %>><%= k.nama %></option>
+          <% }) %>
+        </select>
+
+        <label class="flex items-center space-x-1.5 ml-1 cursor-pointer text-slate-500 text-xs select-none">
+          <input type="checkbox" name="show_cancelled" value="1" <%= showCancelled ? 'checked' : '' %> onchange="this.form.submit()" class="rounded border-slate-300 text-slate-900 focus:ring-0">
+          <span>Dibatalkan</span>
+        </label>
+      </form>
+
+      <!-- Kotak Pencarian Instan Baris Tabel & Mobile Cards -->
+      <div class="flex items-center space-x-2 w-full sm:w-auto">
+        <div class="relative w-full sm:w-64">
+          <input 
+            type="text" 
+            id="input-cari-bukukas"
+            oninput="filterTabelBukuKas(this)"
+            placeholder="Cari..." 
+            class="w-full px-2.5 py-1.5 pl-8 pr-7 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <button 
+            type="button" 
+            id="search-clear-btn" 
+            onclick="clearBukuKasSearch()" 
+            class="hidden absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs"
+            title="Bersihkan"
+          >
+            &times;
+          </button>
+        </div>
+        <span id="search-counter" class="text-[11px] text-slate-500 font-mono hidden whitespace-nowrap"></span>
+      </div>
+    </div>
+
+    <!-- Total Pengeluaran Kategori Saat Filter Aktif -->
+    <% if (filterKategori && namaFilterKategori) { %>
+      <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 sm:p-3.5 flex items-center justify-between shadow-xs">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+          <span class="text-xs font-semibold text-emerald-950">
+            Total Kategori <strong class="text-emerald-900 font-bold"><%= namaFilterKategori %></strong>
+          </span>
+          <a href="/proyek/<%= proyek.id %>?tab=bukukas" class="text-[11px] text-emerald-700 hover:text-emerald-900 underline font-medium ml-2">
+            Reset
+          </a>
+        </div>
+        <div class="text-sm sm:text-base font-extrabold font-mono text-emerald-800">
+          Rp<%= totalFilterKategori.toLocaleString('id-ID') %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Peringatan Jika Pencarian Tidak Menemukan Hasil -->
+    <div id="search-no-match" class="hidden bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-400">
+      Tidak ada data yang cocok.
+    </div>
+
+    <!-- Mutasi Kas: Desktop View (Tabel Bersih) -->
+    <div class="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table id="tabel-buku-kas" class="min-w-full divide-y divide-slate-100 text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="py-3 px-3.5">Tanggal</th>
+              <th class="py-3 px-3.5">Jenis</th>
+              <th class="py-3 px-3.5">Kategori</th>
+              <th class="py-3 px-3.5">Pengeluaran / Rekanan</th>
+              <th class="py-3 px-3.5 text-right">Nominal</th>
+              <th class="py-3 px-3.5 text-right">Saldo Kas</th>
+              <th class="py-3 px-3.5 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <% if (transaksiList.length === 0) { %>
+              <tr>
+                <td colspan="7" class="py-10 text-center text-slate-400">
+                  Belum ada transaksi di proyek ini.
+                </td>
+              </tr>
+            <% } else { %>
+              <% transaksiList.forEach(t => { %>
+                <tr class="hover:bg-slate-50/80 transition-colors <%= t.is_cancelled ? 'bg-slate-50/60 opacity-60' : '' %>">
+                  <td class="py-3 px-3.5 font-mono whitespace-nowrap text-slate-500">
+                    <%= t.tanggal_transaksi %>
+                  </td>
+                  <td class="py-3 px-3.5 whitespace-nowrap">
+                    <% if (t.is_cancelled) { %>
+                      <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-200 text-slate-700 line-through">
+                        Batal
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full 
+                        <%= t.jenis_transaksi === 'MODAL_MASUK' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : '' %>
+                        <%= t.jenis_transaksi === 'PENARIKAN_MODAL' ? 'bg-amber-50 text-amber-800 border border-amber-200' : '' %>
+                        <%= t.jenis_transaksi === 'PENGELUARAN_LANGSUNG' || t.jenis_transaksi === 'NOTA_PANJAR' ? 'bg-slate-100 text-slate-800 border border-slate-200' : '' %>
+                      ">
+                        <%= t.jenis_transaksi === 'MODAL_MASUK' ? 'Modal' : (t.jenis_transaksi === 'PENARIKAN_MODAL' ? 'Tarik' : 'Belanja') %>
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="py-3 px-3.5 whitespace-nowrap font-medium text-slate-900">
+                    <%= t.nama_kategori || '-' %>
+                  </td>
+                  <td class="py-3 px-3.5 <%= t.is_cancelled ? 'line-through text-slate-400' : '' %>">
+                    <span class="font-medium text-slate-900"><%= t.uraian %></span>
+                    <% if (t.jumlah) { %>
+                      <span class="inline-block ml-1.5 px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded-md border border-slate-200"><%= t.jumlah %></span>
+                    <% } %>
+                    <% if (t.vendor) { %>
+                      <span class="text-[11px] text-slate-400 block"><%= t.vendor %></span>
+                    <% } %>
+                    <% if (t.is_cancelled) { %>
+                      <span class="text-[10px] text-rose-600 block no-underline italic">Alasan: <%= t.cancel_reason %></span>
+                    <% } %>
+                  </td>
+                  <td class="py-3 px-3.5 text-right font-mono font-bold whitespace-nowrap <%= t.is_cancelled ? 'line-through text-slate-400' : (t.jenis_transaksi === 'MODAL_MASUK' ? 'text-emerald-700' : 'text-slate-900') %>">
+                    <%= t.jenis_transaksi === 'MODAL_MASUK' ? '+' : '-' %>Rp<%= Number(t.nominal).toLocaleString('id-ID') %>
+                  </td>
+                  <td class="py-3 px-3.5 text-right font-mono whitespace-nowrap text-slate-600">
+                    <%= runningBalanceMap[t.id] !== undefined ? 'Rp' + Number(runningBalanceMap[t.id]).toLocaleString('id-ID') : '-' %>
+                  </td>
+                  <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                    <% if (!t.is_cancelled && proyek.status === 'Aktif') { %>
+                      <div class="flex items-center justify-end space-x-2">
+                        <button 
+                          type="button"
+                          data-id="<%= t.id %>"
+                          data-uraian="<%= t.uraian %>"
+                          data-vendor="<%= t.vendor || '' %>"
+                          data-jumlah="<%= t.jumlah || '' %>"
+                          onclick="bukaModalEditTxBtn(this)"
+                          class="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onclick="bukaModalBatal(<%= t.id %>, '<%= t.jenis_transaksi %>', <%= t.nominal %>)"
+                          class="text-xs font-semibold text-rose-600 hover:text-rose-800"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    <% } else { %>
+                      <span class="text-slate-300">-</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+          <% if (transaksiList.length > 0) { %>
+            <tfoot class="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800">
+              <tr>
+                <td colspan="4" class="py-3 px-3.5 text-right uppercase text-[11px] tracking-wider text-slate-600">
+                  <% if (filterKategori && namaFilterKategori) { %>
+                    Total Kategori <%= namaFilterKategori %>:
+                  <% } else { %>
+                    Total Belanja Terdaftar:
+                  <% } %>
+                </td>
+                <td class="py-3 px-3.5 text-right font-mono font-extrabold text-sm <%= filterKategori ? 'text-emerald-700' : 'text-slate-900' %>">
+                  <% if (filterKategori) { %>
+                    Rp<%= totalFilterKategori.toLocaleString('id-ID') %>
+                  <% } else { %>
+                    <% const totalPLDesk = transaksiList.filter(t => !t.is_cancelled && (t.jenis_transaksi === 'PENGELUARAN_LANGSUNG' || t.jenis_transaksi === 'NOTA_PANJAR')).reduce((acc, curr) => acc + Number(curr.nominal), 0); %>
+                    Rp<%= totalPLDesk.toLocaleString('id-ID') %>
+                  <% } %>
+                </td>
+                <td colspan="2" class="py-3 px-3.5 text-slate-400 text-[11px] font-normal">
+                  (<%= transaksiList.filter(t => !t.is_cancelled).length %> Transaksi)
+                </td>
+              </tr>
+            </tfoot>
+          <% } %>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mutasi Kas: Mobile Feed View (Khusus Layar HP - Sangat Mudah Dibaca) -->
+    <div id="buku-kas-mobile" class="md:hidden space-y-2.5">
+      <% if (transaksiList.length === 0) { %>
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-400">
+          Belum ada transaksi di proyek ini.
+        </div>
+      <% } else { %>
+        <% transaksiList.forEach(t => { %>
+          <div class="buku-kas-card bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-2 <%= t.is_cancelled ? 'bg-slate-50/70 opacity-60' : '' %>">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="font-mono text-slate-400 text-[11px]"><%= t.tanggal_transaksi %></span>
+                <span class="text-slate-300">•</span>
+                <span class="font-semibold text-slate-800 text-[11px]"><%= t.nama_kategori || '-' %></span>
+              </div>
+              
+              <div>
+                <% if (t.is_cancelled) { %>
+                  <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-200 text-slate-700 line-through">Batal</span>
+                <% } else { %>
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-full 
+                    <%= t.jenis_transaksi === 'MODAL_MASUK' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : '' %>
+                    <%= t.jenis_transaksi === 'PENARIKAN_MODAL' ? 'bg-amber-50 text-amber-800 border border-amber-200' : '' %>
+                    <%= t.jenis_transaksi === 'PENGELUARAN_LANGSUNG' || t.jenis_transaksi === 'NOTA_PANJAR' ? 'bg-slate-100 text-slate-800 border border-slate-200' : '' %>
+                  ">
+                    <%= t.jenis_transaksi === 'MODAL_MASUK' ? 'Modal' : (t.jenis_transaksi === 'PENARIKAN_MODAL' ? 'Tarik' : 'Belanja') %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="flex items-start justify-between gap-3 pt-0.5">
+              <div class="<%= t.is_cancelled ? 'line-through text-slate-400' : '' %>">
+                <div class="text-xs font-bold text-slate-900 leading-snug">
+                  <%= t.uraian %>
+                  <% if (t.jumlah) { %>
+                    <span class="inline-block ml-1 px-1.5 py-0.2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded border border-slate-200"><%= t.jumlah %></span>
+                  <% } %>
+                </div>
+                <% if (t.vendor) { %>
+                  <div class="text-[11px] text-slate-400 mt-0.5 flex items-center space-x-1">
+                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <span><%= t.vendor %></span>
+                  </div>
+                <% } %>
+                <% if (t.is_cancelled) { %>
+                  <div class="text-[10px] text-rose-600 no-underline italic mt-0.5">Alasan: <%= t.cancel_reason %></div>
+                <% } %>
+              </div>
+
+              <div class="text-right shrink-0">
+                <div class="text-sm font-extrabold font-mono <%= t.is_cancelled ? 'line-through text-slate-400' : (t.jenis_transaksi === 'MODAL_MASUK' ? 'text-emerald-700' : 'text-slate-900') %>">
+                  <%= t.jenis_transaksi === 'MODAL_MASUK' ? '+' : '-' %>Rp<%= Number(t.nominal).toLocaleString('id-ID') %>
+                </div>
+                <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                  Saldo: <%= runningBalanceMap[t.id] !== undefined ? 'Rp' + Number(runningBalanceMap[t.id]).toLocaleString('id-ID') : '-' %>
+                </div>
+              </div>
+            </div>
+
+            <% if (!t.is_cancelled && proyek.status === 'Aktif') { %>
+              <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-100 text-xs">
+                <button 
+                  type="button"
+                  data-id="<%= t.id %>"
+                  data-uraian="<%= t.uraian %>"
+                  data-vendor="<%= t.vendor || '' %>"
+                  data-jumlah="<%= t.jumlah || '' %>"
+                  onclick="bukaModalEditTxBtn(this)"
+                  class="font-semibold text-slate-600 hover:text-slate-900 py-0.5"
+                >
+                  Edit
+                </button>
+                <button 
+                  onclick="bukaModalBatal(<%= t.id %>, '<%= t.jenis_transaksi %>', <%= t.nominal %>)"
+                  class="font-semibold text-rose-600 hover:text-rose-800 py-0.5"
+                >
+                  Batal
+                </button>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+        <!-- Ringkasan Total Belanja / Filter Kategori Mobile -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between text-xs shadow-sm">
+          <span class="font-semibold text-slate-600">
+            <% if (filterKategori && namaFilterKategori) { %>
+              Total Kategori <%= namaFilterKategori %>
+            <% } else { %>
+              Total Belanja Terdaftar
+            <% } %>
+          </span>
+          <span class="font-mono font-extrabold text-sm <%= filterKategori ? 'text-emerald-700' : 'text-slate-900' %>">
+            <% if (filterKategori) { %>
+              Rp<%= totalFilterKategori.toLocaleString('id-ID') %>
+            <% } else { %>
+              <% const totalPLMob = transaksiList.filter(t => !t.is_cancelled && (t.jenis_transaksi === 'PENGELUARAN_LANGSUNG' || t.jenis_transaksi === 'NOTA_PANJAR')).reduce((acc, curr) => acc + Number(curr.nominal), 0); %>
+              Rp<%= totalPLMob.toLocaleString('id-ID') %>
+            <% } %>
+          </span>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: ANGGARAN -->
+  <div id="tab-anggaran" class="tab-content <%= activeTab === 'anggaran' ? '' : 'hidden' %> space-y-3">
+    
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">Anggaran</h3>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <% if (typeof otherProjects !== 'undefined' && otherProjects.length > 0) { %>
+          <button onclick="openModal('modal-salin-anggaran')" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-all shadow-sm">
+            Salin
+          </button>
+        <% } %>
+        <button onclick="openModal('modal-tambah-kategori')" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+          + Kategori
+        </button>
+      </div>
+    </div>
+
+    <!-- Ringkasan Anggaran -->
+    <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm grid grid-cols-3 gap-2 text-center sm:text-left">
+      <div>
+        <span class="text-[10px] sm:text-xs text-slate-400 block">Total Pagu</span>
+        <span class="text-xs sm:text-xl font-bold font-mono text-slate-900 block mt-0.5">
+          Rp<%= totalPaguAnggaran.toLocaleString('id-ID') %>
+        </span>
+      </div>
+      <div>
+        <span class="text-[10px] sm:text-xs text-slate-400 block">Realisasi</span>
+        <span class="text-xs sm:text-xl font-bold font-mono text-emerald-700 block mt-0.5">
+          Rp<%= saldo.biayaTerealisasi.toLocaleString('id-ID') %>
+        </span>
+      </div>
+      <div>
+        <span class="text-[10px] sm:text-xs text-slate-400 block">Sisa</span>
+        <span class="text-xs sm:text-xl font-bold font-mono <%= (totalPaguAnggaran - saldo.biayaTerealisasi) < 0 ? 'text-rose-700' : 'text-slate-900' %> block mt-0.5">
+          Rp<%= (totalPaguAnggaran - saldo.biayaTerealisasi).toLocaleString('id-ID') %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Tabel Anggaran (Desktop View) -->
+    <div class="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="py-3 px-3.5">Kategori</th>
+              <th class="py-3 px-3.5 text-right">Pagu</th>
+              <th class="py-3 px-3.5 text-right">Realisasi</th>
+              <th class="py-3 px-3.5 text-right">Sisa</th>
+              <th class="py-3 px-3.5 text-center">Status</th>
+              <th class="py-3 px-3.5 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-800">
+            <% anggaranList.forEach(item => { %>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-3 px-3.5 font-bold text-slate-900">
+                  <%= item.nama %>
+                </td>
+                <td class="py-3 px-3.5 text-right font-mono">
+                  Rp<%= item.pagu_anggaran.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-3 px-3.5 text-right font-mono font-bold text-slate-900">
+                  Rp<%= item.realisasi.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-3 px-3.5 text-right font-mono <%= item.sisa_anggaran < 0 ? 'text-rose-700 font-bold' : 'text-slate-600' %>">
+                  Rp<%= item.sisa_anggaran.toLocaleString('id-ID') %>
+                </td>
+                <td class="py-3 px-3.5 text-center">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border <%= item.badgeClass %>">
+                    <%= item.status %> (<%= item.persentase %>%)
+                  </span>
+                </td>
+                <td class="py-3 px-3.5 text-right">
+                  <button 
+                    onclick="bukaModalAnggaran(<%= item.kategori_id %>, '<%= item.nama %>', <%= item.pagu_anggaran %>)"
+                    class="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    Atur
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Feed Anggaran (Mobile View - Khusus Layar HP) -->
+    <div class="md:hidden space-y-2.5">
+      <% anggaranList.forEach(item => { %>
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-xs"><%= item.nama %></span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border <%= item.badgeClass %>">
+              <%= item.status %> (<%= item.persentase %>%)
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1 text-center bg-slate-50/80 p-2 rounded-lg border border-slate-100 text-[10px]">
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase">Pagu</span>
+              <span class="font-mono font-bold text-slate-800">Rp<%= item.pagu_anggaran.toLocaleString('id-ID') %></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase">Realisasi</span>
+              <span class="font-mono font-bold text-slate-900">Rp<%= item.realisasi.toLocaleString('id-ID') %></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase">Sisa</span>
+              <span class="font-mono font-bold <%= item.sisa_anggaran < 0 ? 'text-rose-700' : 'text-slate-700' %>">
+                Rp<%= item.sisa_anggaran.toLocaleString('id-ID') %>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-0.5">
+            <button 
+              onclick="bukaModalAnggaran(<%= item.kategori_id %>, '<%= item.nama %>', <%= item.pagu_anggaran %>)"
+              class="px-3 py-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              Atur Pagu
+            </button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </div>
+
+  <!-- TAB 3: ESTIMASI / m² -->
+  <div id="tab-patokan" class="tab-content <%= activeTab === 'patokan' ? '' : 'hidden' %> space-y-3">
+    
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">Patokan Biaya Konstruksi per m²</h3>
+        <p class="text-xs text-slate-400">Dari riwayat proyek sejenis (<%= proyek.jenis_bangunan %>) yang selesai.</p>
+      </div>
+
+      <% if (!patokan || !patokan.cukupData) { %>
+        <div class="p-6 bg-slate-50 border border-slate-200 rounded-lg text-center text-xs text-slate-500">
+          <p class="font-medium text-slate-700"><%= patokan ? patokan.pesan : 'Dibutuhkan minimal 2 proyek sejenis yang selesai.' %></p>
+        </div>
+      <% } else { %>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <span class="text-xs text-slate-500 block">Tarif Terendah</span>
+            <span class="text-base font-bold font-mono text-slate-900 block mt-0.5">Rp<%= patokan.minRate.toLocaleString('id-ID') %> / m²</span>
+            <span class="text-[11px] text-slate-400 block mt-0.5">Proyeksi: Rp<%= patokan.proyeksiMin.toLocaleString('id-ID') %></span>
+          </div>
+
+          <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <span class="text-xs text-emerald-800 font-semibold block">Tarif Rata-Rata</span>
+            <span class="text-base font-extrabold font-mono text-emerald-950 block mt-0.5">Rp<%= patokan.medianRate.toLocaleString('id-ID') %> / m²</span>
+            <span class="text-[11px] text-emerald-700 block mt-0.5">Proyeksi: Rp<%= patokan.proyeksiMedian.toLocaleString('id-ID') %></span>
+          </div>
+
+          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <span class="text-xs text-slate-500 block">Tarif Tertinggi</span>
+            <span class="text-base font-bold font-mono text-slate-900 block mt-0.5">Rp<%= patokan.maxRate.toLocaleString('id-ID') %> / m²</span>
+            <span class="text-[11px] text-slate-400 block mt-0.5">Proyeksi: Rp<%= patokan.proyeksiMax.toLocaleString('id-ID') %></span>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- TAB 4: RIWAYAT AUDIT -->
+  <div id="tab-audit" class="tab-content <%= activeTab === 'audit' ? '' : 'hidden' %> space-y-3">
+    
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <h3 class="text-sm font-bold text-slate-900">Riwayat Perubahan</h3>
+
+      <% if (auditLogs.length === 0) { %>
+        <p class="text-xs text-slate-400 py-4 text-center">Belum ada riwayat.</p>
+      <% } else { %>
+        <div class="divide-y divide-slate-100 text-xs">
+          <% auditLogs.forEach(a => { %>
+            <div class="py-2.5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <div>
+                <span class="font-bold text-slate-900"><%= a.aksi %></span>:
+                <span class="text-slate-700 ml-1"><%= a.keterangan %></span>
+              </div>
+              <span class="text-[10px] sm:text-[11px] text-slate-400 font-mono whitespace-nowrap"><%= a.created_at %></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- TAB 5: PENGATURAN -->
+  <div id="tab-pengaturan" class="tab-content <%= activeTab === 'pengaturan' ? '' : 'hidden' %> space-y-4">
+    
+    <!-- Status -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <h3 class="text-sm font-bold text-slate-900">Status Proyek</h3>
+      <form action="/proyek/<%= proyek.id %>/status" method="POST" class="flex flex-wrap items-center gap-2">
+        <select name="status" id="select-status-pengaturan" onchange="toggleTanggalSelesaiInput(this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900">
+          <option value="Aktif" <%= proyek.status === 'Aktif' ? 'selected' : '' %>>Aktif</option>
+          <option value="Selesai" <%= proyek.status === 'Selesai' ? 'selected' : '' %>>Selesai</option>
+          <option value="Arsip" <%= proyek.status === 'Arsip' ? 'selected' : '' %>>Arsip</option>
+        </select>
+        <div id="wrapper-tgl-selesai" class="<%= proyek.status === 'Selesai' ? 'flex' : 'hidden' %> items-center space-x-1">
+          <span class="text-xs text-slate-500">Tgl:</span>
+          <input type="date" name="tanggal_selesai" value="<%= proyek.tanggal_selesai || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) %>" class="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900">
+        </div>
+        <button type="submit" class="px-3.5 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800">
+          Simpan
+        </button>
+      </form>
+    </div>
+
+    <!-- Pindah Cabang -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <h3 class="text-sm font-bold text-slate-900">Cabang</h3>
+      <form action="/proyek/<%= proyek.id %>/pindah-cabang" method="POST" class="flex items-center space-x-2">
+        <select name="cabang_id" class="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900">
+          <% cabangList.forEach(c => { %>
+            <option value="<%= c.id %>" <%= proyek.cabang_id === c.id ? 'selected' : '' %>><%= c.nama %></option>
+          <% }) %>
+        </select>
+        <button type="submit" class="px-3.5 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800">
+          Pindah
+        </button>
+      </form>
+    </div>
+
+    <!-- Edit Metadata -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <h3 class="text-sm font-bold text-slate-900">Spesifikasi</h3>
+
+      <form action="/proyek/<%= proyek.id %>/edit-metadata" method="POST" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Proyek *</label>
+          <input type="text" name="nama" value="<%= proyek.nama %>" placeholder="Nama" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:bg-white focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jenis *</label>
+            <select name="jenis_bangunan" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:bg-white focus:outline-none">
+              <% (typeof jenisList !== 'undefined' && jenisList.length > 0 ? jenisList : ['Rumah', 'Ruko', 'Renovasi', 'Gedung', 'Lainnya']).forEach(j => { %>
+                <option value="<%= j %>" <%= proyek.jenis_bangunan === j ? 'selected' : '' %>><%= j %></option>
+              <% }) %>
+              <% if (typeof jenisList !== 'undefined' && !jenisList.includes(proyek.jenis_bangunan)) { %>
+                <option value="<%= proyek.jenis_bangunan %>" selected><%= proyek.jenis_bangunan %></option>
+              <% } %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Luas (m²)</label>
+            <input type="number" name="luas_m2" value="<%= proyek.luas_m2 %>" placeholder="Luas" min="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="edit-lokasi" class="block font-semibold text-slate-700">Lokasi</label>
+              <button 
+                type="button" 
+                onclick="lacakLokasiGPS('edit-lokasi')" 
+                id="btn-lacak-gps-edit"
+                class="text-[11px] font-semibold text-slate-500 hover:text-slate-900 inline-flex items-center space-x-1 transition-colors"
+                title="Lacak GPS Lokasi Sekarang"
+              >
+                <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span id="label-gps-edit-lokasi">GPS</span>
+              </button>
+            </div>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="edit-lokasi" 
+                name="lokasi" 
+                value="<%= proyek.lokasi || '' %>" 
+                placeholder="Lokasi" 
+                class="w-full px-3 py-2 pr-7 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:bg-white focus:outline-none"
+              >
+              <button 
+                type="button" 
+                onclick="lacakLokasiGPS('edit-lokasi')" 
+                class="absolute right-2 top-2 text-slate-400 hover:text-slate-700"
+                title="Deteksi Lokasi GPS"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m12.728 0l-1.414-1.414M6.343 6.343L4.929 4.929M12 17a5 5 0 100-10 5 5 0 000 10z"></path>
+                </svg>
+              </button>
+            </div>
+            <div id="status-gps-edit-lokasi" class="text-[10px] text-slate-400 mt-1 hidden truncate"></div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal *</label>
+            <input type="date" name="tanggal_mulai" value="<%= proyek.tanggal_mulai %>" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <button type="submit" class="px-4 py-2 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800">
+            Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- FLOATING ACTION BUTTON (AKSI CEPAT MELAYANG DI KANAN BAWAH) -->
+<!-- ========================================================================= -->
+<% if (proyek.status === 'Aktif') { %>
+  <div id="fab-catat-belanja" class="fixed bottom-5 right-5 z-30">
+    <button 
+      type="button"
+      onclick="openModal('modal-pengeluaran')" 
+      class="inline-flex items-center space-x-2 px-4 py-3 bg-slate-900 text-white rounded-full shadow-xl hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/20"
+      title="Catat Belanja Langsung (Tekan tombol B)"
+    >
+      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+      <span class="text-xs font-bold tracking-wide pr-1">Catat Belanja</span>
+    </button>
+  </div>
+<% } %>
+
+<!-- ========================================================================= -->
+<!-- MODAL AKSI (SUPER SIMPEL & USER FRIENDLY) -->
+<!-- ========================================================================= -->
+
+<!-- MODAL: AKHIRI PROYEK (PINDAHKAN KE HISTORI & CATAT TANGGAL BERAKHIR OTOMATIS) -->
+<div id="modal-akhiri-proyek" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 leading-snug">Akhiri Proyek</h3>
+          <p class="text-[11px] text-slate-400">Pindahkan proyek ke Histori</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeModal('modal-akhiri-proyek')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Ringkasan Keuangan Akhir Proyek -->
+    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 space-y-1.5 text-xs">
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500">Nama:</span>
+        <span class="font-bold text-slate-900 truncate max-w-[180px]"><%= proyek.nama %></span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500">Mulai:</span>
+        <span class="font-mono text-slate-700"><%= proyek.tanggal_mulai %></span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500">Modal Bersih:</span>
+        <span class="font-mono font-medium text-slate-800">Rp<%= saldo.modalBersih.toLocaleString('id-ID') %></span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500">Total Belanja:</span>
+        <span class="font-mono font-bold text-slate-900">Rp<%= saldo.biayaTerealisasi.toLocaleString('id-ID') %></span>
+      </div>
+      <div class="flex justify-between items-center pt-1.5 border-t border-slate-200">
+        <span class="font-bold text-slate-700">Sisa Kas Akhir:</span>
+        <span class="font-mono font-extrabold <%= saldo.isKasMinus ? 'text-rose-600' : 'text-emerald-700' %>">
+          Rp<%= saldo.saldoKas.toLocaleString('id-ID') %>
+        </span>
+      </div>
+    </div>
+
+    <form action="/proyek/<%= proyek.id %>/akhiri" method="POST" class="space-y-3.5">
+      <!-- Tanggal Berakhir Otomatis (WIB Hari Ini) -->
+      <div>
+        <label for="tanggal_selesai_input" class="block text-xs font-semibold text-slate-700 mb-1">
+          Tanggal Berakhir Proyek
+        </label>
+        <input 
+          type="date" 
+          id="tanggal_selesai_input" 
+          name="tanggal_selesai" 
+          value="<%= new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) %>"
+          min="<%= proyek.tanggal_mulai %>"
+          required 
+          class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-slate-50 font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+        <span class="text-[10px] text-slate-400 mt-1 block">Tercatat otomatis hari ini, dapat disesuaikan jika proyek selesai lebih awal.</span>
+      </div>
+
+      <!-- Catatan Penutupan -->
+      <div>
+        <label for="catatan_selesai_input" class="block text-xs font-semibold text-slate-700 mb-1">
+          Catatan Penutupan (Opsional)
+        </label>
+        <textarea 
+          id="catatan_selesai_input" 
+          name="catatan_selesai" 
+          rows="2"
+          placeholder="Misal: Serah terima kunci selesai, pekerjaan rampung..."
+          class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+        ></textarea>
+      </div>
+
+      <div class="pt-2 flex items-center space-x-2">
+        <button 
+          type="button" 
+          onclick="closeModal('modal-akhiri-proyek')" 
+          class="flex-1 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+        >
+          Batal
+        </button>
+        <button 
+          type="submit" 
+          class="flex-1 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-sm"
+        >
+          Konfirmasi Akhiri
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 1: CATAT BELANJA (HANYA NAMA PENGELUARAN & NOMINAL) -->
+<div id="modal-pengeluaran" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+        <h3 class="text-sm font-bold text-slate-900">Belanja</h3>
+      </div>
+      <button onclick="closeModal('modal-pengeluaran')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form action="/proyek/<%= proyek.id %>/belanja" method="POST" data-idempotent class="space-y-3.5 text-xs">
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Pengeluaran *</label>
+        <input 
+          type="text" 
+          id="belanja-uraian-input"
+          name="uraian" 
+          placeholder="Uraian" 
+          required 
+          autofocus
+          autocomplete="off"
+          class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+        <!-- Indikator Kategori Otomatis Realtime -->
+        <div id="live-kategori-badge" class="mt-1.5 hidden"></div>
+      </div>
+
+      <!-- Kategori Kustom / Pilihan / Tambah Baru -->
+      <div>
+        <label for="belanja-kategori-select" class="block font-semibold text-slate-700 mb-1">Kategori</label>
+        <select 
+          id="belanja-kategori-select" 
+          name="kategori_id" 
+          onchange="handleKategoriSelect(this)" 
+          class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="">Otomatis</option>
+          <% kategoriList.forEach(k => { %>
+            <option value="<%= k.id %>"><%= k.nama %></option>
+          <% }) %>
+          <option value="__BARU__" class="font-bold text-emerald-700 bg-emerald-50">+ Tambah</option>
+        </select>
+
+        <!-- Input Kategori Baru -->
+        <div id="container-kategori-baru" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+          <label for="input-kategori-baru" class="block font-bold text-slate-800 text-[11px]">
+            Kategori Baru *
+          </label>
+          <input 
+            type="text" 
+            id="input-kategori-baru" 
+            name="kategori_baru" 
+            placeholder="Kategori" 
+            class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Nominal (Rp) *</label>
+        <input 
+          type="text" 
+          inputmode="numeric"
+          name="nominal" 
+          placeholder="Nominal" 
+          required 
+          autocomplete="off"
+          class="currency-input w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+        >
+        <!-- Tombol Tambah Nominal Cepat -->
+        <div class="flex flex-wrap items-center gap-1.5 pt-1.5">
+          <button type="button" onclick="tambahNominal('modal-pengeluaran', 50000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+50 rb</button>
+          <button type="button" onclick="tambahNominal('modal-pengeluaran', 100000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+100 rb</button>
+          <button type="button" onclick="tambahNominal('modal-pengeluaran', 500000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+500 rb</button>
+          <button type="button" onclick="tambahNominal('modal-pengeluaran', 1000000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+1 jt</button>
+          <button type="button" onclick="tambahNominal('modal-pengeluaran', 0)" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-medium rounded transition-colors">Reset</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Jumlah</label>
+        <input 
+          type="text" 
+          name="jumlah" 
+          placeholder="Contoh: 10 sak, 50 biji (opsional)" 
+          autocomplete="off"
+          class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Toko</label>
+        <input 
+          type="text" 
+          name="vendor" 
+          placeholder="Toko" 
+          class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+      </div>
+
+      <input type="hidden" name="tanggal" value="<%= new Date().toISOString().split('T')[0] %>">
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-pengeluaran')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100 transition-colors">Batal</button>
+        <button type="submit" class="px-5 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 shadow-sm transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 2: KELOLA MODAL -->
+<div id="modal-kelola-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-slate-900">Modal</h3>
+      <button onclick="closeModal('modal-kelola-modal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form action="/proyek/<%= proyek.id %>/modal" method="POST" data-idempotent class="space-y-3.5 text-xs">
+      <div class="grid grid-cols-2 gap-2">
+        <label class="flex items-center justify-center space-x-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+          <input type="radio" name="tipe" value="MASUK" checked class="text-slate-900 focus:ring-0">
+          <span class="font-bold text-slate-800">Setor (+)</span>
+        </label>
+        <label class="flex items-center justify-center space-x-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+          <input type="radio" name="tipe" value="PENARIKAN" class="text-slate-900 focus:ring-0">
+          <span class="font-bold text-slate-800">Tarik (-)</span>
+        </label>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Nominal (Rp) *</label>
+        <input 
+          type="text" 
+          inputmode="numeric"
+          name="nominal" 
+          placeholder="Nominal" 
+          required 
+          autocomplete="off"
+          class="currency-input w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+        >
+        <!-- Tombol Cepat Nominal Modal -->
+        <div class="flex flex-wrap items-center gap-1.5 pt-1.5">
+          <button type="button" onclick="tambahNominal('modal-kelola-modal', 5000000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+5 jt</button>
+          <button type="button" onclick="tambahNominal('modal-kelola-modal', 10000000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+10 jt</button>
+          <button type="button" onclick="tambahNominal('modal-kelola-modal', 25000000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+25 jt</button>
+          <button type="button" onclick="tambahNominal('modal-kelola-modal', 50000000)" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-medium rounded transition-colors">+50 jt</button>
+          <button type="button" onclick="tambahNominal('modal-kelola-modal', 0)" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-medium rounded transition-colors">Reset</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Uraian</label>
+        <input type="text" name="uraian" placeholder="Uraian" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900">
+      </div>
+
+      <input type="hidden" name="tanggal" value="<%= new Date().toISOString().split('T')[0] %>">
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-kelola-modal')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100 transition-colors">Batal</button>
+        <button type="submit" class="px-5 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 shadow-sm transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 3: BATAL TRANSAKSI -->
+<div id="modal-batal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-rose-700">Batalkan</h3>
+      <button onclick="closeModal('modal-batal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form id="form-batal-transaksi" method="POST" class="space-y-3.5 text-xs">
+      <p class="text-slate-600">
+        Batalkan: <strong id="modal-batal-info"></strong>
+      </p>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Alasan *</label>
+        <input type="text" name="alasan" placeholder="Alasan" required minlength="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-rose-500">
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-batal')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100">Batal</button>
+        <button type="submit" class="px-4 py-2 font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Batalkan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 4: EDIT TRANSAKSI -->
+<div id="modal-edit-tx" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-slate-900">Edit</h3>
+      <button onclick="closeModal('modal-edit-tx')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form id="form-edit-tx" method="POST" class="space-y-3.5 text-xs">
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Uraian *</label>
+        <input type="text" id="modal-edit-uraian" name="uraian" placeholder="Uraian" required minlength="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Jumlah</label>
+        <input type="text" id="modal-edit-jumlah" name="jumlah" placeholder="Contoh: 10 sak, 50 biji (opsional)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Toko</label>
+        <input type="text" id="modal-edit-vendor" name="vendor" placeholder="Toko" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900">
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-edit-tx')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100">Batal</button>
+        <button type="submit" class="px-4 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 5: ATUR PAGU -->
+<div id="modal-anggaran" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-slate-900">Pagu</h3>
+      <button onclick="closeModal('modal-anggaran')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form action="/proyek/<%= proyek.id %>/anggaran" method="POST" class="space-y-3.5 text-xs">
+      <input type="hidden" id="modal-anggaran-kat-id" name="kategori_id">
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1"><strong id="modal-anggaran-nama"></strong></label>
+        <input 
+          type="text" 
+          inputmode="numeric" 
+          id="modal-anggaran-pagu" 
+          name="pagu_anggaran" 
+          placeholder="Pagu" 
+          required 
+          autocomplete="off"
+          class="currency-input w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-anggaran')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100">Batal</button>
+        <button type="submit" class="px-4 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 6: TAMBAH KATEGORI -->
+<div id="modal-tambah-kategori" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-slate-900">Kategori Baru</h3>
+      <button onclick="closeModal('modal-tambah-kategori')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form action="/kategori" method="POST" class="space-y-3.5 text-xs">
+      <input type="hidden" name="proyek_id" value="<%= proyek.id %>">
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Kategori *</label>
+        <input type="text" name="nama" placeholder="Kategori" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-slate-900">
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-tambah-kategori')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100">Batal</button>
+        <button type="submit" class="px-4 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 7: SALIN ANGGARAN -->
+<div id="modal-salin-anggaran" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+      <h3 class="text-sm font-bold text-slate-900">Salin Anggaran</h3>
+      <button onclick="closeModal('modal-salin-anggaran')" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <form action="/proyek/<%= proyek.id %>/salin-anggaran" method="POST" class="space-y-3.5 text-xs">
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Proyek Asal</label>
+        <select name="sumber_proyek_id" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-slate-900">
+          <% if (typeof otherProjects !== 'undefined') { %>
+            <% otherProjects.forEach(p => { %>
+              <option value="<%= p.id %>"><%= p.nama %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-salin-anggaran')" class="px-3.5 py-2 font-semibold text-slate-500 rounded-xl hover:bg-slate-100">Batal</button>
+        <button type="submit" class="px-4 py-2 font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors">Salin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function pilihFilterJenis(val) {
+    const input = document.getElementById('filter-jenis-val');
+    if (input) {
+      input.value = val;
+      input.form.submit();
+    }
+  }
+
+  function bukaModalBatal(transaksiId, jenis, nominal) {
+    const form = document.getElementById('form-batal-transaksi');
+    form.action = `/proyek/<%= proyek.id %>/transaksi/${transaksiId}/batal`;
+    document.getElementById('modal-batal-info').innerText = `${jenis} (Rp${Number(nominal).toLocaleString('id-ID')})`;
+    openModal('modal-batal');
+  }
+
+  function bukaModalEditTxBtn(btn) {
+    const form = document.getElementById('form-edit-tx');
+    form.action = `/proyek/<%= proyek.id %>/transaksi/${btn.dataset.id}/edit`;
+    document.getElementById('modal-edit-uraian').value = btn.dataset.uraian || '';
+    document.getElementById('modal-edit-vendor').value = btn.dataset.vendor || '';
+    const elJml = document.getElementById('modal-edit-jumlah');
+    if (elJml) elJml.value = btn.dataset.jumlah || '';
+    openModal('modal-edit-tx');
+  }
+
+  function bukaModalAnggaran(kategoriId, namaKategori, paguSaatIni) {
+    document.getElementById('modal-anggaran-kat-id').value = kategoriId;
+    document.getElementById('modal-anggaran-nama').innerText = namaKategori;
+    document.getElementById('modal-anggaran-pagu').value = typeof formatAngkaTitik === 'function' ? formatAngkaTitik(paguSaatIni) : paguSaatIni;
+    openModal('modal-anggaran');
+  }
+
+  function toggleTanggalSelesaiInput(val) {
+    const el = document.getElementById('wrapper-tgl-selesai');
+    if (el) {
+      if (val === 'Selesai') {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+      } else {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    }
+  }
+</script>

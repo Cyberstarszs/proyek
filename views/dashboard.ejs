@@ -1,0 +1,508 @@
+<div class="space-y-6">
+
+  <!-- Filter Bar & Pencarian Langsung -->
+  <div class="flex flex-wrap items-center justify-between gap-2 pb-2 sm:pb-3 border-b border-slate-200">
+    <!-- Pencarian Instan Proyek -->
+    <div class="relative w-full sm:w-56">
+      <input 
+        type="text" 
+        oninput="filterProyekCards(this)"
+        placeholder="Cari proyek..." 
+        class="w-full px-2.5 py-1.5 pl-7 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+      >
+      <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+
+    <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+      <form action="/" method="GET" class="flex items-center gap-2">
+        <% if (cabangList && cabangList.length > 1) { %>
+          <select 
+            name="cabang_id" 
+            onchange="this.form.submit()" 
+            class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-slate-900 focus:outline-none"
+          >
+            <option value="">Semua Cabang</option>
+            <% cabangList.forEach(c => { %>
+              <option value="<%= c.id %>" <%= filterCabang === c.id ? 'selected' : '' %>>
+                <%= c.nama %>
+              </option>
+            <% }) %>
+          </select>
+        <% } %>
+
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer select-none">
+          <input 
+            type="checkbox" 
+            name="show_arsip" 
+            value="1" 
+            <%= showArsip ? 'checked' : '' %> 
+            onchange="this.form.submit()"
+            class="rounded border-slate-300 text-slate-900 focus:ring-0"
+          >
+          <span>Arsip</span>
+        </label>
+      </form>
+
+      <a href="/proyek/baru" class="inline-flex items-center space-x-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-all shadow-sm shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+        <span>Tambah</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ringkasan Total Portofolio dengan Motif Bangunan & Infrastruktur -->
+  <% if (typeof ringkasanTotal !== 'undefined' && ringkasanTotal.totalProyek > 0) { %>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+      <!-- Total Kas Tersedia (Motif Bangunan Arsitektur) -->
+      <div class="relative overflow-hidden col-span-2 sm:col-span-1 p-3.5 sm:p-4 rounded-xl border bg-white border-slate-200 shadow-sm group">
+        <svg class="absolute -right-2 -bottom-2 w-28 h-20 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 200 140" fill="none" stroke="currentColor">
+          <path d="M50 135V75L120 25L190 75V135H50Z" stroke-width="2" />
+          <path d="M42 78L120 22L198 78" stroke-width="2.5" />
+          <rect x="70" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+          <rect x="142" y="85" width="28" height="32" rx="2" stroke-width="1.5" />
+        </svg>
+        <div class="relative z-10 flex items-center justify-between text-xs text-slate-500 uppercase tracking-wider font-semibold">
+          <span>Total Kas Tersedia</span>
+          <span class="text-[11px] text-slate-400 font-normal"><%= ringkasanTotal.totalProyek %> Proyek</span>
+        </div>
+        <div class="relative z-10 text-xl sm:text-2xl font-extrabold font-mono text-slate-900 mt-1">
+          Rp<%= ringkasanTotal.totalKas.toLocaleString('id-ID') %>
+        </div>
+      </div>
+
+      <!-- Total Belanja (Motif Tower Crane Konstruksi) -->
+      <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-xl border bg-white border-slate-200 shadow-sm group">
+        <svg class="absolute -right-2 -bottom-2 w-28 h-20 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 220 150" fill="none" stroke="currentColor">
+          <line x1="82" y1="16" x2="82" y2="142" stroke-width="2" />
+          <line x1="94" y1="16" x2="94" y2="142" stroke-width="2" />
+          <line x1="38" y1="16" x2="208" y2="16" stroke-width="2.5" />
+          <path d="M88 4L42 16M88 4L130 16M88 4L170 16" stroke-width="1.2" />
+        </svg>
+        <span class="relative z-10 text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold block">Total Belanja</span>
+        <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono text-slate-900 mt-1">
+          Rp<%= ringkasanTotal.totalBelanja.toLocaleString('id-ID') %>
+        </div>
+      </div>
+
+      <!-- Total Modal (Motif Jembatan Infrastruktur) -->
+      <div class="relative overflow-hidden p-3.5 sm:p-4 rounded-xl border bg-white border-slate-200 shadow-sm group">
+        <svg class="absolute -right-2 -bottom-2 w-32 h-20 text-slate-900/6 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 240 145" fill="none" stroke="currentColor">
+          <path d="M5 106H235" stroke-width="3" />
+          <path d="M136 12L127 106M136 12L145 106" stroke-width="2.5" />
+          <line x1="136" y1="22" x2="55" y2="106" stroke-width="1.2" />
+          <line x1="136" y1="42" x2="88" y2="106" stroke-width="1.2" />
+          <line x1="136" y1="22" x2="218" y2="106" stroke-width="1.2" />
+          <line x1="136" y1="42" x2="184" y2="106" stroke-width="1.2" />
+        </svg>
+        <span class="relative z-10 text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold block">Total Modal</span>
+        <div class="relative z-10 text-base sm:text-2xl font-extrabold font-mono text-slate-900 mt-1">
+          Rp<%= ringkasanTotal.totalModal.toLocaleString('id-ID') %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Daftar Proyek -->
+  <% if (grupCabang.length === 0 || grupCabang.every(g => g.proyek.length === 0)) { %>
+    <div class="bg-white rounded-2xl border border-slate-200/90 p-7 sm:p-10 shadow-sm text-center max-w-2xl mx-auto space-y-6">
+      
+      <!-- Icon & Welcome Header -->
+      <div class="flex flex-col items-center">
+        <img src="/image/icon.png" alt="MyProyek" class="h-14 w-14 object-contain rounded-2xl mb-3.5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900 tracking-tight">Selamat Datang di MyProyek</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-md">
+          Belum ada proyek. Mulai kelola arus kas proyek konstruksi Anda secara mandiri, rapi, dan transparan.
+        </p>
+      </div>
+
+      <!-- 3 Langkah Alur Kerja Sederhana -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1">
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-900">
+            <span class="h-5 w-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-mono">1</span>
+            <span>Modal Proyek</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">
+            Setiap proyek punya kas mandiri sejak pertama kali didaftarkan.
+          </p>
+        </div>
+
+        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1">
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-900">
+            <span class="h-5 w-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-mono">2</span>
+            <span>Catat Belanja</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">
+            Ketik pengeluaran langsung di lapangan; kategori terdeteksi otomatis.
+          </p>
+        </div>
+
+        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1">
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-900">
+            <span class="h-5 w-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-mono">3</span>
+            <span>Pantau Kas</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">
+            Saldo uang kas di tangan dan realisasi belanja selalu terhitung seketika.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tombol Aksi Utama -->
+      <div class="pt-2">
+        <a href="/proyek/baru" class="inline-flex items-center space-x-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+          <span>Daftarkan Proyek Pertama</span>
+        </a>
+      </div>
+
+    </div>
+  <% } else { %>
+
+    <div class="space-y-6">
+      <% grupCabang.forEach(grup => { %>
+        <% if (grup.proyek.length > 0 || !filterCabang) { %>
+          <div class="cabang-section space-y-3">
+            
+            <div class="flex items-center justify-between pb-1 border-b border-slate-200">
+              <div class="flex items-center space-x-2">
+                <span class="h-2 w-2 rounded-full <%= grup.is_active ? 'bg-emerald-600' : 'bg-slate-400' %>"></span>
+                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <%= grup.nama %>
+                </h2>
+              </div>
+              <span class="text-[11px] text-slate-400 font-medium">
+                <%= grup.proyek.length %> Proyek
+              </span>
+            </div>
+
+            <% if (grup.proyek.length === 0) { %>
+              <p class="text-xs text-slate-400 py-2">Tidak ada proyek aktif.</p>
+            <% } else { %>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <% grup.proyek.forEach(p => { %>
+                  <% 
+                    // 5 Skala Warna & Motif Pembangunan Sesuai Level Kartu (Rumah, Ruko, Crane/Baja, Jembatan, Pencakar Langit)
+                    const modalVal = Number(p.saldo.modalBersih || p.saldo.biayaTerealisasi || 0);
+                    let tierInfo = {
+                      level: 1,
+                      nama: 'Mikro',
+                      motifNama: 'Rumah & Hunian',
+                      rentang: '<50 Jt',
+                      cardGradient: 'bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800',
+                      chipGradient: 'from-amber-200 via-yellow-300 to-amber-400',
+                      saldoCardBg: 'bg-teal-50/70 border-teal-200/90 text-teal-950',
+                      saldoLabelColor: 'text-teal-700',
+                      saldoValColor: 'text-teal-950',
+                      belanjaValColor: 'text-slate-800',
+                      actionBtnClass: 'bg-teal-100 hover:bg-teal-200 text-teal-900 border-teal-300',
+                      badgeClass: 'bg-teal-50 text-teal-700 border-teal-200'
+                    };
+
+                    if (modalVal >= 1500000000) {
+                      tierInfo = {
+                        level: 5,
+                        nama: 'Mega',
+                        motifNama: 'Pencakar Langit',
+                        rentang: '>1.5 M',
+                        cardGradient: 'bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950',
+                        chipGradient: 'from-amber-300 via-yellow-300 to-amber-500',
+                        saldoCardBg: 'bg-slate-900 border-slate-800 text-white',
+                        saldoLabelColor: 'text-slate-400',
+                        saldoValColor: 'text-emerald-400',
+                        belanjaValColor: 'text-slate-200',
+                        actionBtnClass: 'bg-white/10 hover:bg-white/20 text-white border-white/20',
+                        badgeClass: 'bg-slate-900 text-white border-slate-800'
+                      };
+                    } else if (modalVal >= 500000000) {
+                      tierInfo = {
+                        level: 4,
+                        nama: 'Besar',
+                        motifNama: 'Jembatan & Viaduct',
+                        rentang: '500Jt-1.5M',
+                        cardGradient: 'bg-gradient-to-br from-purple-800 via-pink-700 to-rose-600',
+                        chipGradient: 'from-amber-100 via-amber-200 to-yellow-300',
+                        saldoCardBg: 'bg-pink-50/70 border-pink-200/90 text-pink-950',
+                        saldoLabelColor: 'text-pink-600',
+                        saldoValColor: 'text-pink-900',
+                        belanjaValColor: 'text-slate-800',
+                        actionBtnClass: 'bg-pink-100 hover:bg-pink-200 text-pink-900 border-pink-300',
+                        badgeClass: 'bg-pink-50 text-pink-700 border-pink-200'
+                      };
+                    } else if (modalVal >= 150000000) {
+                      tierInfo = {
+                        level: 3,
+                        nama: 'Menengah',
+                        motifNama: 'Crane & Rangka Baja',
+                        rentang: '150-500Jt',
+                        cardGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500',
+                        chipGradient: 'from-amber-100 via-yellow-200 to-amber-300',
+                        saldoCardBg: 'bg-amber-50/70 border-amber-200/90 text-amber-950',
+                        saldoLabelColor: 'text-amber-700',
+                        saldoValColor: 'text-amber-950',
+                        belanjaValColor: 'text-slate-800',
+                        actionBtnClass: 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300',
+                        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200'
+                      };
+                    } else if (modalVal >= 50000000) {
+                      tierInfo = {
+                        level: 2,
+                        nama: 'Kecil',
+                        motifNama: 'Ruko & Komersial',
+                        rentang: '50-150Jt',
+                        cardGradient: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500',
+                        chipGradient: 'from-amber-200 via-yellow-300 to-amber-400',
+                        saldoCardBg: 'bg-blue-50/70 border-blue-200/90 text-blue-950',
+                        saldoLabelColor: 'text-blue-600',
+                        saldoValColor: 'text-blue-950',
+                        belanjaValColor: 'text-slate-800',
+                        actionBtnClass: 'bg-blue-100 hover:bg-blue-200 text-blue-900 border-blue-300',
+                        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200'
+                      };
+                    }
+                  %>
+
+                  <div class="proyek-card flex flex-col space-y-2.5 group">
+                    <!-- 1. KARTU FISIK / SMART CARD MODAL PROYEK DENGAN MOTIF PEMBANGUNAN -->
+                    <a href="/proyek/<%= p.id %>" class="relative w-full rounded-2xl p-4 sm:p-5 text-white shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col justify-between <%= tierInfo.cardGradient %> border border-white/20">
+                      <!-- Ambient Glow & Light Wave Overlay -->
+                      <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/15 blur-xl pointer-events-none"></div>
+                      <div class="absolute -left-8 -bottom-8 w-36 h-36 rounded-full bg-black/20 blur-xl pointer-events-none"></div>
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10 pointer-events-none"></div>
+
+                      <!-- MOTIF PEMBANGUNAN ARSITEKTURAL SESUAI LEVEL KARTU -->
+                      <% if (tierInfo.level === 1) { %>
+                        <!-- Motif Level 1: Rumah Tinggal & Hunian Modern (Gable Architecture) -->
+                        <svg class="absolute right-0 bottom-0 w-44 h-32 sm:w-52 sm:h-36 text-white/20 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:text-white/30" viewBox="0 0 200 140" fill="none" stroke="currentColor">
+                          <path d="M50 135V75L120 25L190 75V135H50Z" stroke-width="1.6" stroke-linejoin="round" fill="currentColor" fill-opacity="0.05" />
+                          <path d="M120 25V135" stroke-width="1" stroke-dasharray="3 2" />
+                          <path d="M42 78L120 22L198 78" stroke-width="2" stroke-linecap="round" />
+                          <line x1="30" y1="135" x2="210" y2="135" stroke-width="1.8" />
+                          <path d="M25 135V95L50 80" stroke-width="1.4" stroke-linejoin="round" />
+                          <rect x="70" y="85" width="28" height="32" rx="2" stroke-width="1.2" />
+                          <line x1="84" y1="85" x2="84" y2="117" stroke-width="0.8" />
+                          <line x1="70" y1="101" x2="98" y2="101" stroke-width="0.8" />
+                          <rect x="142" y="85" width="28" height="32" rx="2" stroke-width="1.2" />
+                          <line x1="156" y1="85" x2="156" y2="117" stroke-width="0.8" />
+                          <line x1="142" y1="101" x2="170" y2="101" stroke-width="0.8" />
+                          <rect x="108" y="92" width="24" height="43" stroke-width="1.2" fill="currentColor" fill-opacity="0.08" />
+                          <circle cx="127" cy="115" r="1.5" fill="currentColor" />
+                          <circle cx="120" cy="55" r="9" stroke-width="1.2" />
+                          <line x1="120" y1="46" x2="120" y2="64" stroke-width="0.8" />
+                          <line x1="111" y1="55" x2="129" y2="55" stroke-width="0.8" />
+                          <path d="M160 52V30H175V63" stroke-width="1.2" />
+                        </svg>
+                      <% } else if (tierInfo.level === 2) { %>
+                        <!-- Motif Level 2: Fasad Ruko Komersial Bertingkat (Commercial Shophouse) -->
+                        <svg class="absolute right-0 bottom-0 w-44 h-34 sm:w-52 sm:h-38 text-white/20 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:text-white/30" viewBox="0 0 200 145" fill="none" stroke="currentColor">
+                          <line x1="15" y1="138" x2="205" y2="138" stroke-width="1.8" />
+                          <rect x="65" y="22" width="75" height="116" rx="1.5" stroke-width="1.8" fill="currentColor" fill-opacity="0.05" />
+                          <path d="M60 22H145" stroke-width="2.5" stroke-linecap="round" />
+                          <rect x="75" y="16" width="55" height="6" stroke-width="1" />
+                          <line x1="65" y1="62" x2="140" y2="62" stroke-width="1.4" />
+                          <line x1="65" y1="98" x2="140" y2="98" stroke-width="1.4" />
+                          <rect x="75" y="32" width="22" height="20" rx="1" stroke-width="1.1" />
+                          <rect x="108" y="32" width="22" height="20" rx="1" stroke-width="1.1" />
+                          <rect x="75" y="70" width="55" height="20" rx="1" stroke-width="1.1" />
+                          <line x1="88" y1="70" x2="88" y2="90" stroke-width="0.8" />
+                          <line x1="102" y1="70" x2="102" y2="90" stroke-width="0.8" />
+                          <line x1="116" y1="70" x2="116" y2="90" stroke-width="0.8" />
+                          <path d="M60 98L65 102H140L145 98" stroke-width="1.2" fill="currentColor" fill-opacity="0.1" />
+                          <rect x="74" y="104" width="26" height="34" stroke-width="1.2" />
+                          <rect x="105" y="104" width="26" height="34" stroke-width="1.2" />
+                          <path d="M140 55H190V138H140" stroke-width="1.4" fill="currentColor" fill-opacity="0.03" />
+                          <line x1="140" y1="95" x2="190" y2="95" stroke-width="1" />
+                          <rect x="150" y="65" width="30" height="20" stroke-width="1" />
+                          <rect x="150" y="105" width="30" height="33" stroke-width="1" />
+                        </svg>
+                      <% } else if (tierInfo.level === 3) { %>
+                        <!-- Motif Level 3: Tower Crane & Rangka Baja Struktur (Crane & Truss Skeleton) -->
+                        <svg class="absolute right-0 bottom-0 w-48 h-36 sm:w-56 sm:h-42 text-white/22 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:text-white/32" viewBox="0 0 220 150" fill="none" stroke="currentColor">
+                          <line x1="10" y1="142" x2="215" y2="142" stroke-width="1.8" />
+                          <path d="M125 65H195V142H125Z" stroke-width="1.4" fill="currentColor" fill-opacity="0.04" />
+                          <line x1="125" y1="90" x2="195" y2="90" stroke-width="1" stroke-dasharray="3 2" />
+                          <line x1="125" y1="116" x2="195" y2="116" stroke-width="1" stroke-dasharray="3 2" />
+                          <line x1="160" y1="65" x2="160" y2="142" stroke-width="1.2" />
+                          <line x1="125" y1="65" x2="160" y2="90" stroke-width="0.8" />
+                          <line x1="160" y1="65" x2="125" y2="90" stroke-width="0.8" />
+                          <line x1="160" y1="65" x2="195" y2="90" stroke-width="0.8" />
+                          <line x1="195" y1="65" x2="160" y2="90" stroke-width="0.8" />
+                          <line x1="125" y1="90" x2="160" y2="116" stroke-width="0.8" />
+                          <line x1="160" y1="90" x2="125" y2="116" stroke-width="0.8" />
+                          <line x1="160" y1="90" x2="195" y2="116" stroke-width="0.8" />
+                          <line x1="195" y1="90" x2="160" y2="116" stroke-width="0.8" />
+                          <line x1="82" y1="16" x2="82" y2="142" stroke-width="1.8" />
+                          <line x1="94" y1="16" x2="94" y2="142" stroke-width="1.8" />
+                          <path d="M82 28L94 38M94 28L82 38M82 48L94 58M94 48L82 58M82 68L94 78M94 68L82 78M82 88L94 98M94 88L82 98M82 108L94 118M94 108L82 118M82 128L94 138M94 128L82 138" stroke-width="0.8" />
+                          <polygon points="78,16 98,16 88,4" stroke-width="1.4" fill="currentColor" fill-opacity="0.15" />
+                          <rect x="76" y="18" width="11" height="11" rx="1" stroke-width="1.1" fill="currentColor" fill-opacity="0.25" />
+                          <line x1="38" y1="16" x2="208" y2="16" stroke-width="2" />
+                          <path d="M88 4L42 16M88 4L130 16M88 4L170 16M88 4L208 16" stroke-width="0.9" />
+                          <rect x="40" y="12" width="16" height="10" stroke-width="1" fill="currentColor" fill-opacity="0.35" />
+                          <rect x="150" y="15" width="8" height="4" fill="currentColor" />
+                          <line x1="154" y1="19" x2="154" y2="52" stroke-width="1" stroke-dasharray="2 1" />
+                          <path d="M151 52H157L154 58Z" fill="currentColor" />
+                          <line x1="147" y1="59" x2="161" y2="59" stroke-width="1.5" />
+                        </svg>
+                      <% } else if (tierInfo.level === 4) { %>
+                        <!-- Motif Level 4: Jembatan Gantung Kabel & Viaduct (Cable-Stayed Bridge) -->
+                        <svg class="absolute right-0 bottom-0 w-50 h-38 sm:w-60 sm:h-44 text-white/22 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:text-white/32" viewBox="0 0 240 145" fill="none" stroke="currentColor">
+                          <path d="M10 134C40 133 70 137 100 134C130 131 160 137 190 134C215 132 230 135 240 134" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
+                          <path d="M25 140C55 139 85 142 115 140C145 138 175 142 205 140" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.4" />
+                          <path d="M5 106H235" stroke-width="2.6" />
+                          <path d="M5 110H235" stroke-width="1.1" />
+                          <path d="M15 106V110M45 106V110M75 106V110M105 106V110M135 106V110M165 106V110M195 106V110M225 106V110" stroke-width="0.75" />
+                          <path d="M130 110V136H142V110" stroke-width="1.8" fill="currentColor" fill-opacity="0.12" />
+                          <path d="M38 110V134H46V110" stroke-width="1.4" />
+                          <path d="M208 110V134H216V110" stroke-width="1.4" />
+                          <path d="M136 12L127 106M136 12L145 106" stroke-width="2.2" />
+                          <line x1="128" y1="58" x2="144" y2="58" stroke-width="1.5" />
+                          <line x1="130" y1="84" x2="142" y2="84" stroke-width="1.5" />
+                          <circle cx="136" cy="9" r="3" fill="currentColor" fill-opacity="0.35" stroke-width="1" />
+                          <line x1="136" y1="22" x2="55" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="32" x2="72" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="42" x2="88" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="52" x2="104" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="62" x2="118" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="22" x2="218" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="32" x2="200" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="42" x2="184" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="52" x2="168" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <line x1="136" y1="62" x2="154" y2="106" stroke-width="0.9" opacity="0.85" />
+                          <path d="M10 75Q60 104 136 12Q200 104 235 80" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.45" />
+                        </svg>
+                      <% } else if (tierInfo.level === 5) { %>
+                        <!-- Motif Level 5: Pencakar Langit Megah & Superstruktur (Diagrid Spire) -->
+                        <svg class="absolute right-0 bottom-0 w-48 h-38 sm:w-56 sm:h-44 text-white/22 pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:text-white/32" viewBox="0 0 220 155" fill="none" stroke="currentColor">
+                          <line x1="15" y1="148" x2="215" y2="148" stroke-width="1.8" />
+                          <path d="M42 70H78V148H42Z" stroke-width="1" stroke-dasharray="2 2" fill="currentColor" fill-opacity="0.03" />
+                          <line x1="60" y1="70" x2="60" y2="148" stroke-width="0.6" stroke-dasharray="2 2" />
+                          <path d="M165 60L180 45V148H145V60H165Z" stroke-width="1" fill="currentColor" fill-opacity="0.04" />
+                          <line x1="145" y1="85" x2="180" y2="85" stroke-width="0.8" />
+                          <line x1="145" y1="112" x2="180" y2="112" stroke-width="0.8" />
+                          <line x1="112" y1="4" x2="112" y2="25" stroke-width="1.8" />
+                          <circle cx="112" cy="4" r="2.5" fill="currentColor" />
+                          <circle cx="112" cy="4" r="6" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+                          <path d="M100 25L106 15H118L124 25" stroke-width="1.2" />
+                          <path d="M102 25H122L127 62L133 105L137 148H87L91 105L97 62L102 25Z" stroke-width="1.6" fill="currentColor" fill-opacity="0.07" />
+                          <line x1="97" y1="62" x2="127" y2="62" stroke-width="1.2" />
+                          <line x1="91" y1="105" x2="133" y2="105" stroke-width="1.2" />
+                          <line x1="102" y1="25" x2="127" y2="62" stroke-width="0.8" />
+                          <line x1="122" y1="25" x2="97" y2="62" stroke-width="0.8" />
+                          <line x1="97" y1="62" x2="133" y2="105" stroke-width="0.8" />
+                          <line x1="127" y1="62" x2="91" y2="105" stroke-width="0.8" />
+                          <line x1="91" y1="105" x2="137" y2="148" stroke-width="0.8" />
+                          <line x1="133" y1="105" x2="87" y2="148" stroke-width="0.8" />
+                          <line x1="112" y1="25" x2="112" y2="148" stroke-width="0.75" stroke-dasharray="3 2" opacity="0.6" />
+                        </svg>
+                      <% } %>
+
+                      <!-- Header Kartu: Brand & Contactless + Status -->
+                      <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5 min-w-0">
+                          <img src="/image/icon.png" alt="MyProyek" class="w-4 h-4 sm:w-5 sm:h-5 object-contain brightness-0 invert opacity-95 shrink-0">
+                          <span class="text-[11px] font-black uppercase tracking-wider text-white shrink-0">MyProyek</span>
+                          <span class="text-white/40 text-[10px] shrink-0">•</span>
+                          <span class="text-[10px] font-bold text-white/90 uppercase tracking-wider shrink-0"><%= tierInfo.nama %></span>
+                          <span class="hidden sm:inline-block text-white/40 text-[10px]">•</span>
+                          <span class="hidden sm:inline-block text-[9px] font-medium text-white/75 truncate max-w-[110px]" title="Motif: <%= tierInfo.motifNama %>"><%= tierInfo.motifNama %></span>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                          <svg class="w-4 h-4 text-white/70" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 16.5a5 5 0 010-9M12 19a9 9 0 000-14M15.5 21.5a13 13 0 000-19" />
+                          </svg>
+                          <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xs">
+                            <%= p.status %>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Microchip & Kode Nomor Kartu -->
+                      <div class="relative z-10 my-3.5 flex items-center justify-between">
+                        <!-- Metallic EMV Chip -->
+                        <div class="w-9 h-6.5 rounded-md bg-gradient-to-br <%= tierInfo.chipGradient %> border border-amber-400/80 shadow-xs flex items-center justify-center p-0.5 relative overflow-hidden shrink-0">
+                          <div class="w-full h-full border border-amber-700/30 rounded-2xs flex flex-col justify-between">
+                            <div class="h-[1px] w-full bg-amber-700/30"></div>
+                            <div class="h-[1px] w-full bg-amber-700/30"></div>
+                          </div>
+                          <div class="absolute inset-y-0 left-1/2 w-[1px] bg-amber-700/30"></div>
+                        </div>
+
+                        <!-- Nomor Kode Proyek Bergaya Kartu Kredit -->
+                        <div class="font-mono text-[11px] font-bold tracking-widest text-white/85 select-none drop-shadow-2xs">
+                          PRJ • <%= String(p.id).padStart(4, '0') %> • <%= p.jenis_bangunan ? p.jenis_bangunan.toUpperCase().slice(0, 4) : 'RUMH' %>
+                        </div>
+                      </div>
+
+                      <!-- Nominal Modal Utama (Sesuai Referensi Gambar Pengguna) -->
+                      <div class="relative z-10 mb-3">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-white/75 flex items-center space-x-1.5">
+                          <span>Modal Proyek</span>
+                          <span class="text-white/40">•</span>
+                          <span class="text-[9px] font-normal text-white/70">Kerja Mandiri</span>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-black font-mono tracking-tight text-white drop-shadow-xs mt-0.5">
+                          Rp<%= p.saldo.modalBersih.toLocaleString('id-ID') %>
+                        </div>
+                      </div>
+
+                      <!-- Footer Kartu: Nama Proyek & Emblem Hologram -->
+                      <div class="relative z-10 pt-2.5 border-t border-white/20 flex items-end justify-between gap-2">
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-sm font-bold text-white truncate max-w-[210px] drop-shadow-2xs leading-snug">
+                            <%= p.nama %>
+                          </div>
+                          <div class="text-[10px] text-white/80 truncate mt-0.5 flex items-center space-x-1">
+                            <span><%= p.jenis_bangunan %><% if (p.luas_m2 > 0) { %> • <%= p.luas_m2 %> m²<% } %></span>
+                            <% if (p.lokasi) { %>
+                              <span>• <%= p.lokasi %></span>
+                            <% } %>
+                          </div>
+                        </div>
+
+                        <!-- Hologram Dual Ring Emblem (Model Visa/Mastercard) -->
+                        <div class="flex items-center -space-x-2 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <div class="w-5 h-5 rounded-full bg-white/40 backdrop-blur-xs"></div>
+                          <div class="w-5 h-5 rounded-full bg-white/20 backdrop-blur-xs"></div>
+                        </div>
+                      </div>
+                    </a>
+
+                    <!-- 2. KARTU SALDO & BELANJA KONSISTEN WARNA TIER -->
+                    <div class="rounded-2xl border p-3.5 shadow-xs transition-all flex items-center justify-between gap-3 <%= p.saldo.isKasMinus ? 'bg-rose-50 border-rose-300 text-rose-950' : tierInfo.saldoCardBg %>">
+                      <div class="min-w-0">
+                        <div class="flex items-center space-x-1.5">
+                          <span class="text-[10px] font-bold uppercase tracking-wider <%= p.saldo.isKasMinus ? 'text-rose-600' : tierInfo.saldoLabelColor %>">
+                            Saldo Kas
+                          </span>
+                          <% if (p.saldo.isKasMinus) { %>
+                            <span class="text-[9px] bg-rose-600 text-white font-bold px-1.5 py-0.2 rounded">Defisit</span>
+                          <% } %>
+                          <span class="text-[9px] font-medium px-1.5 py-0.2 rounded border <%= tierInfo.badgeClass %> hidden sm:inline-block"><%= tierInfo.motifNama %></span>
+                        </div>
+                        <div class="text-base sm:text-lg font-black font-mono tracking-tight <%= p.saldo.isKasMinus ? 'text-rose-700' : tierInfo.saldoValColor %> mt-0.5">
+                          Rp<%= p.saldo.saldoKas.toLocaleString('id-ID') %>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                          Belanja: <span class="font-mono font-bold <%= tierInfo.belanjaValColor %>">Rp<%= p.saldo.biayaTerealisasi.toLocaleString('id-ID') %></span>
+                        </div>
+                      </div>
+
+                      <a href="/proyek/<%= p.id %>" class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 border shadow-2xs <%= tierInfo.actionBtnClass %>">
+                        <span>Buka</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+
+          </div>
+        <% } %>
+      <% }) %>
+    </div>
+
+  <% } %>
+
+</div>
